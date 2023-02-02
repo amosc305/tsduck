@@ -42,7 +42,6 @@ ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, const PluginEventHandle
     _log(log),
     _opt(opt),
     _inputs(_opt.inputs.size(), nullptr),
-    _output(_opt, handlers, *this, _log), // load output plugin and analyze options
     _mutex(),
     _gotInput(),
     _curPlugin(0),
@@ -65,10 +64,6 @@ ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, const PluginEventHandle
         // Initialize the PCR vector
         _pcrs.push_back({});
     }
-
-    // Set the asynchronous logger as report method for output as well.
-    _output.setReport(&_log);
-    _output.setMaxSeverity(_log.maxSeverity());
 }
 
 ts::tspcrdelta::Core::~Core()
@@ -96,14 +91,6 @@ bool ts::tspcrdelta::Core::start()
         }
     }
 
-    // Start output plugin.
-    if (!_output.plugin()->getOptions() ||  // Let plugin fetch its command line options.
-        !_output.plugin()->start() ||       // Open the output "device", whatever it means.
-        !_output.start())                   // Start the output thread.
-    {
-        return false;
-    }
-
     // Create the output file if there is one
     if (_opt.output_name.empty()) {
         _output_file = &std::cerr;
@@ -125,19 +112,13 @@ bool ts::tspcrdelta::Core::start()
     // Start all input threads (but do not open the input "devices").
     bool success = true;
     for (size_t i = 0; success && i < _inputs.size(); ++i) {
-        // Here, start() means start the thread, not start input plugin.
+        // Here, start() means start the thread, and start input plugin.
         success = _inputs[i]->start();
     }
 
     if (!success) {
         // If one input thread could not start, abort all started threads.
         stop(false);
-    }
-    else {
-        // Always start all input plugins, they continue to receive in parallel
-        for (size_t i = 0; i < _inputs.size(); ++i) {
-            _inputs[i]->startInput();
-        }
     }
 
     return success;
@@ -150,20 +131,17 @@ bool ts::tspcrdelta::Core::start()
 
 void ts::tspcrdelta::Core::stop(bool success)
 {
-    // Wake up all threads waiting for something on the compare object.
-    {
-        GuardCondition lock(_mutex, _gotInput);
-        _terminate = true;
-        lock.signal();
-    }
+    // // Wake up all threads waiting for something on the compare object.
+    // {
+    //     GuardCondition lock(_mutex, _gotInput);
+    //     _terminate = true;
+    //     lock.signal();
+    // }
 
-    // Tell the output plugin to terminate.
-    _output.terminateOutput();
-
-    // Tell all input plugins to terminate.
-    for (size_t i = 0; success && i < _inputs.size(); ++i) {
-        _inputs[i]->terminateInput();
-    }
+    // // Tell all input plugins to terminate.
+    // for (size_t i = 0; success && i < _inputs.size(); ++i) {
+    //     _inputs[i]->terminateInput();
+    // }
 }
 
 //----------------------------------------------------------------------------
@@ -285,18 +263,12 @@ void ts::tspcrdelta::Core::execute(const Action& event)
                 break;
             }
             case START: {
-                _inputs[action.index]->startInput();
                 break;
             }
             case STOP: {
-                _inputs[action.index]->stopInput();
                 break;
             }
             case ABORT_INPUT: {
-                // Abort only if flag is set in action.
-                if (action.flag && !_inputs[action.index]->abortInput()) {
-                    _log.warning(u"input plugin %s does not support interruption, blocking may occur", {_inputs[action.index]->pluginName()});
-                }
                 break;
             }
             case WAIT_STARTED:
@@ -323,55 +295,6 @@ void ts::tspcrdelta::Core::execute(const Action& event)
         // Command executed, dequeue it.
         _actions.pop_front();
     }
-}
-
-
-//----------------------------------------------------------------------------
-// Get some packets to output (called by output plugin).
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::Core::getOutputArea(size_t& pluginIndex, TSPacket*& first, TSPacketMetadata*& data, size_t& count)
-{
-    assert(pluginIndex < _inputs.size());
-
-    // Loop on _gotInput condition until the current input plugin has something to output.
-    GuardCondition lock(_mutex, _gotInput);
-    for (;;) {
-        if (_terminate) {
-            first = nullptr;
-            count = 0;
-        }
-        else {
-            _inputs[_curPlugin]->getOutputArea(first, data, count);
-        }
-        // Return when there is something to output in current plugin or the application terminates.
-        if (count > 0 || _terminate) {
-            // Tell the output plugin which input plugin is used.
-            pluginIndex = _curPlugin;
-            // Return false when the application terminates.
-            return !_terminate;
-        }
-        // Otherwise, sleep on _gotInput condition.
-        lock.waitCondition();
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Report output packets (called by output plugin).
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::Core::outputSent(size_t pluginIndex, size_t count)
-{
-    assert(pluginIndex < _inputs.size());
-
-    // Inform the input plugin that the packets can be reused for input.
-    // We notify the original input plugin from which the packets came.
-    // The "current" input plugin may have changed in the meantime.
-    _inputs[pluginIndex]->freeOutput(count);
-
-    // Return false when the application terminates.
-    return !_terminate;
 }
 
 
@@ -522,9 +445,6 @@ bool ts::tspcrdelta::Core::inputStopped(size_t pluginIndex, bool success)
 
 void ts::tspcrdelta::Core::waitForTermination()
 {
-    // Wait for output termination.
-    _output.waitForTermination();
-
     // Wait for all input termination.
     for (size_t i = 0; i < _inputs.size(); ++i) {
         _inputs[i]->waitForTermination();

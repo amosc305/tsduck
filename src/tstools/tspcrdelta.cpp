@@ -73,7 +73,7 @@ namespace {
 }
 
 TSPcrDeltaOptions::TSPcrDeltaOptions(int argc, char *argv[]) :
-    ts::ArgsWithPlugins(0, UNLIMITED_COUNT, 0, 0, 0, 1, u"Compare PCR between two TS input source", u"[tspcrdelta-options]"),
+    ts::ArgsWithPlugins(0, UNLIMITED_COUNT, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[tspcrdelta-options]"),
     duck(this),
     log_args(),
     comparator_args()

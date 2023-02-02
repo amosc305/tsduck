@@ -51,11 +51,6 @@ ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
     _metadata(opt.bufferedPackets),
     _mutex(),
     _todo(),
-    _isCurrent(false),
-    _outputInUse(false),
-    _startRequest(false),
-    _stopRequest(false),
-    _terminated(false),
     _outFirst(0),
     _outCount(0),
     _start_time(true) // initialized with current system time
@@ -79,90 +74,6 @@ size_t ts::tspcrdelta::InputExecutor::pluginIndex() const
     return _pluginIndex;
 }
 
-
-//----------------------------------------------------------------------------
-// Start input.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::InputExecutor::startInput()
-{
-    debug(u"received start request");
-
-    GuardCondition lock(_mutex, _todo);
-    _startRequest = true;
-    _stopRequest = false;
-    lock.signal();
-}
-
-
-//----------------------------------------------------------------------------
-// Stop input.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::InputExecutor::stopInput()
-{
-    debug(u"received stop request");
-
-    GuardCondition lock(_mutex, _todo);
-    _startRequest = false;
-    _stopRequest = true;
-    lock.signal();
-}
-
-
-//----------------------------------------------------------------------------
-// Abort the input operation currently in progress in the plugin.
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::InputExecutor::abortInput()
-{
-    return _input != nullptr && _input->abortInput();
-}
-
-//----------------------------------------------------------------------------
-// Terminate input.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::InputExecutor::terminateInput()
-{
-    GuardCondition lock(_mutex, _todo);
-    _terminated = true;
-    lock.signal();
-}
-
-
-//----------------------------------------------------------------------------
-// Get some packets to output.
-// Indirectly called from the output plugin when it needs some packets.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::InputExecutor::getOutputArea(ts::TSPacket*& first, TSPacketMetadata*& data, size_t& count)
-{
-    GuardCondition lock(_mutex, _todo);
-    first = &_buffer[_outFirst];
-    data = &_metadata[_outFirst];
-    count = std::min(_outCount, _buffer.size() - _outFirst);
-    _outputInUse = count > 0;
-    lock.signal();
-}
-
-
-//----------------------------------------------------------------------------
-// Free output packets (after being sent).
-// Indirectly called from the output plugin after sending packets.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::InputExecutor::freeOutput(size_t count)
-{
-    GuardCondition lock(_mutex, _todo);
-    assert(count <= _outCount);
-    _outFirst = (_outFirst + count) % _buffer.size();
-    _outCount -= count;
-    _outputInUse = false;
-    lock.signal();
-}
-
-
 //----------------------------------------------------------------------------
 // Invoked in the context of the plugin thread.
 //----------------------------------------------------------------------------
@@ -173,29 +84,6 @@ void ts::tspcrdelta::InputExecutor::main()
 
     // Main loop. Each iteration is a complete input session.
     for (;;) {
-
-        // Initial sequence under mutex protection.
-        debug(u"waiting for input session");
-        {
-            GuardCondition lock(_mutex, _todo);
-            // Reset input buffer.
-            _outFirst = 0;
-            _outCount = 0;
-            // Wait for start or terminate.
-            while (!_startRequest && !_terminated) {
-                lock.waitCondition();
-            }
-            // Exit main loop when termination is requested.
-            if (_terminated) {
-                break;
-            }
-            // At this point, start is requested, reset trigger.
-            _startRequest = false;
-            _stopRequest = false;
-            // Inform the TSP layer to reset plugin session accounting.
-            restartPluginSession();
-        }
-
         // Here, we need to start an input session.
         debug(u"starting input plugin");
         const bool started = _input->start();
@@ -220,7 +108,7 @@ void ts::tspcrdelta::InputExecutor::main()
             {
                 // Wait for free buffer or stop.
                 GuardCondition lock(_mutex, _todo);
-                while (_outCount >= _buffer.size() && !_stopRequest && !_terminated) {
+                while (_outCount >= _buffer.size()) {
                     // Not the current input plugin in --fast-switch mode.
                     // Drop older packets, free at most --max-input-packets.
                     assert(_outFirst < _buffer.size());
@@ -229,11 +117,7 @@ void ts::tspcrdelta::InputExecutor::main()
                     _outFirst = (_outFirst + freeCount) % _buffer.size();
                     _outCount -= freeCount;
                 }
-                // Exit input when termination is requested.
-                if (_stopRequest || _terminated) {
-                    debug(u"exiting session: stop request: %s, terminated: %s", {_stopRequest, _terminated});
-                    break;
-                }
+
                 // There is some free buffer, compute first index and size of receive area.
                 // The receive area is limited by end of buffer and max input size.
                 inFirst = (_outFirst + _outCount) % _buffer.size();
@@ -254,7 +138,6 @@ void ts::tspcrdelta::InputExecutor::main()
                 debug(u"received end of input from plugin");
                 break;
             }
-            addPluginPackets(inCount);
 
             // Fill input time stamps with monotonic clock if none was provided by the input plugin.
             // Only check the first returned packet. Assume that the input plugin generates time stamps for all or none.
@@ -265,36 +148,9 @@ void ts::tspcrdelta::InputExecutor::main()
                 }
             }
 
-            // Signal the presence of received packets.
-            {
-                GuardMutex lock(_mutex);
-                _outCount += inCount;
-            }
-            _core.inputReceived(_pluginIndex);
-
             // Pass packet to tspcrdelta core for analyzing
             TSPacket* pkt = &_buffer[inFirst];
             _core.analyzePacket(pkt, inCount, _pluginIndex);
         }
-
-        // At end of session, make sure that the output buffer is not in use by the output plugin.
-        {
-            // Wait for the output plugin to release the buffer.
-            // In case of normal end of input (no stop, no terminate), wait for all output to be gone.
-            GuardCondition lock(_mutex, _todo);
-            while (_outputInUse || (_outCount > 0 && !_stopRequest && !_terminated)) {
-                debug(u"input terminated, waiting for output plugin to release the buffer");
-                lock.waitCondition();
-            }
-            // And reset the output part of the buffer.
-            _outFirst = 0;
-            _outCount = 0;
-        }
-
-        // End of input session.
-        debug(u"stopping input plugin");
-        _core.inputStopped(_pluginIndex, _input->stop());
     }
-
-    debug(u"input thread terminated");
 }

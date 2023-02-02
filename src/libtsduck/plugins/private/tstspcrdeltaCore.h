@@ -35,7 +35,6 @@
 #pragma once
 #include "tsPcrComparatorArgs.h"
 #include "tstspcrdeltaInputExecutor.h"
-#include "tstspcrdeltaOutputExecutor.h"
 #include "tsMutex.h"
 #include "tsCondition.h"
 #include "tsWatchDog.h"
@@ -114,26 +113,6 @@ namespace ts {
             //!
             bool inputStopped(size_t pluginIndex, bool success);
 
-            //!
-            //! Called by the output plugin when it needs some packets to output.
-            //! Wait until there is some packets to output.
-            //! @param [out] pluginIndex Returned index of the input plugin.
-            //! @param [out] first Returned address of first packet to output.
-            //! @param [out] data Returned address of metadata for the first packet to output.
-            //! @param [out] count Returned number of packets to output.
-            //! Never zero, except when @c tspcrdelta is terminating.
-            //! @return False when @c tspcrdelta is terminating.
-            //!
-            bool getOutputArea(size_t& pluginIndex, TSPacket*& first, TSPacketMetadata*& data, size_t& count);
-
-            //!
-            //! Called by the output plugin after sending packets.
-            //! @param [in] pluginIndex Index of the input plugin from which the packets were sent.
-            //! @param [in] count Number of output packets to release.
-            //! @return False when @c tspcrdelta is terminating.
-            //!
-            bool outputSent(size_t pluginIndex, size_t count);
-
         private:
             // Upon reception of an event (end of input, remote command, etc), there
             // is a list of actions to execute which depends on the switch policy.
@@ -177,7 +156,6 @@ namespace ts {
             Report&                  _log;             // Asynchronous log report.
             const PcrComparatorArgs& _opt;             // Command line options.
             InputExecutorVector      _inputs;          // Input plugins threads.
-            OutputExecutor  _output;           // Output plugin thread.
             Mutex           _mutex;            // Global mutex, protect access to all subsequent fields.
             Condition       _gotInput;         // Signaled each time an input plugin reports new packets.
             size_t          _curPlugin;        // Index of current input plugin.
