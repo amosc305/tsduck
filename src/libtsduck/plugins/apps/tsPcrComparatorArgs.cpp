@@ -35,6 +35,7 @@ constexpr size_t ts::PcrComparatorArgs::DEFAULT_MAX_INPUT_PACKETS;
 constexpr size_t ts::PcrComparatorArgs::MIN_INPUT_PACKETS;
 constexpr size_t ts::PcrComparatorArgs::DEFAULT_BUFFERED_PACKETS;
 constexpr size_t ts::PcrComparatorArgs::MIN_BUFFERED_PACKETS;
+constexpr int ts::PcrComparatorArgs::DESIGNATED_INPUT_PLUGIN_NUMBER;
 #endif
 
 
@@ -44,8 +45,6 @@ constexpr size_t ts::PcrComparatorArgs::MIN_BUFFERED_PACKETS;
 
 ts::PcrComparatorArgs::PcrComparatorArgs() :
     appName(),
-    terminate(false),
-    cycleCount(1),
     bufferedPackets(0),
     maxInputPackets(0),
     inputs(),
@@ -84,24 +83,12 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
               u"Specify the size in TS packets of each input plugin buffer. "
               u"The default is " + UString::Decimal(DEFAULT_BUFFERED_PACKETS) + u" packets.");
 
-    args.option(u"cycle", 'c', Args::POSITIVE);
-    args.help(u"cycle",
-              u"Specify how many times to repeat the cycle through all input plugins in sequence. "
-              u"By default, all input plugins are executed in sequence only once (--cycle 1). "
-              u"The options --cycle, --infinite and --terminate are mutually exclusive.");
-
-    args.option(u"infinite", 'i');
-    args.help(u"infinite", u"Infinitely repeat the cycle through all input plugins in sequence.");
-
     args.option(u"max-input-packets", 0, Args::POSITIVE);
     args.help(u"max-input-packets",
               u"Specify the maximum number of TS packets to read at a time. "
               u"This value may impact the switch response time. "
               u"The default is " + UString::Decimal(DEFAULT_MAX_INPUT_PACKETS) + u" packets. "
               u"The actual value is never more than half the --buffer-packets value.");
-
-    args.option(u"terminate", 't');
-    args.help(u"terminate", u"Terminate execution when the current input plugin terminates.");
 
     args.option(u"output-file", 'o', Args::FILENAME);
     args.help(u"output-file", u"filename",
@@ -131,19 +118,12 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
 bool ts::PcrComparatorArgs::loadArgs(DuckContext& duck, Args& args)
 {
     appName = args.appName();
-    terminate = args.present(u"terminate");
-    args.getIntValue(cycleCount, u"cycle", args.present(u"infinite") ? 0 : 1);
     args.getIntValue(bufferedPackets, u"buffer-packets", DEFAULT_BUFFERED_PACKETS);
     maxInputPackets = std::min(args.intValue<size_t>(u"max-input-packets", DEFAULT_MAX_INPUT_PACKETS), bufferedPackets / 2);
     separator = args.value(u"separator", TS_DEFAULT_CSV_SEPARATOR);
     output_name = args.value(u"output-file");
     csv_format = args.present(u"csv");
     log_format = args.present(u"log");
-
-    // Check conflicting modes.
-    if (args.present(u"cycle") + args.present(u"infinite") + args.present(u"terminate") > 1) {
-        args.error(u"options --cycle, --infinite and --terminate are mutually exclusive");
-    }
 
     // Use CSV format by default.
     if (!csv_format && !log_format) {
@@ -163,9 +143,9 @@ bool ts::PcrComparatorArgs::loadArgs(DuckContext& duck, Args& args)
         inputs.push_back(PluginOptions(u"file"));
     }
 
-    // Check number of input plugins (Must be 2)
-    if (inputs.size() != 2) {
-        args.error(u"Number of input plugins must be 2");
+    // Check number of input plugins
+    if (inputs.size() != DESIGNATED_INPUT_PLUGIN_NUMBER) {
+        args.error(u"Number of input plugins must be %d", {DESIGNATED_INPUT_PLUGIN_NUMBER});
     }
 
     return args.valid();

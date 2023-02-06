@@ -44,7 +44,7 @@ namespace ts {
     }
 
     //!
-    //! Implementation of the input plugin switcher.
+    //! Implementation of the PCR comparator
     //! This class is used by the @a tspcrdelta utility.
     //! @ingroup plugin
     //!

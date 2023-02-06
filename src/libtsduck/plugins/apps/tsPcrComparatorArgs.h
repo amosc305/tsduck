@@ -49,8 +49,6 @@ namespace ts {
     {
     public:
         UString             appName;           //!< Application name, for help messages.
-        bool                terminate;         //!< Terminate when one input plugin completes.
-        size_t              cycleCount;        //!< Number of input cycles to execute (0 = infinite).
         size_t              bufferedPackets;   //!< Input buffer size in packets.
         size_t              maxInputPackets;   //!< Maximum input packets to read at a time.
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
@@ -63,6 +61,7 @@ namespace ts {
         static constexpr size_t      MIN_INPUT_PACKETS = 1;            //!< Minimum input packets to read at a time.
         static constexpr size_t      DEFAULT_BUFFERED_PACKETS = 512;   //!< Default input size buffer in packets.
         static constexpr size_t      MIN_BUFFERED_PACKETS = 16;        //!< Minimum input size buffer in packets.
+        static constexpr int         DESIGNATED_INPUT_PLUGIN_NUMBER = 2; //!< Designated input plugin allowed.
 
         //!
         //! Constructor.

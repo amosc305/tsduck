@@ -43,9 +43,6 @@ ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, const PluginEventHandle
     _opt(opt),
     _inputs(_opt.inputs.size(), nullptr),
     _mutex(),
-    _gotInput(),
-    _curCycle(0),
-    _terminate(false),
     _pcrs(),
     _pcr_delta_threshold_in_ms(1),
     _output_stream(),
@@ -129,16 +126,6 @@ void ts::tspcrdelta::Core::stop(bool success)
     for (size_t i = 0; success && i < _inputs.size(); ++i) {
         _inputs[i]->terminateInput();
     }
-}
-
-//----------------------------------------------------------------------------
-// Invoked when the receive timeout expires.
-// Implementation of WatchDogHandlerInterface.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::Core::handleWatchDogTimeout(WatchDog& watchdog)
-{
-    return;
 }
 
 

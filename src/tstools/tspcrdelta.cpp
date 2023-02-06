@@ -37,12 +37,6 @@
 //  Each instance of the class InputExecutor implements a thread running one
 //  input plugin.
 //
-//  The class OutputExecutor implements the thread running the single output
-//  plugin. When started, it simply waits for packets from the current input
-//  plugin and outputs them. The output threads stops when instructed by the
-//  Switch object or in case of output error. In case of error, the output
-//  threads sends a global stop command to the Switch object.
-//
 //----------------------------------------------------------------------------
 
 #include "tsMain.h"

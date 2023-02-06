@@ -37,7 +37,6 @@
 #include "tstspcrdeltaInputExecutor.h"
 #include "tsMutex.h"
 #include "tsCondition.h"
-#include "tsWatchDog.h"
 
 namespace ts {
     //!
@@ -48,7 +47,7 @@ namespace ts {
         //! PCR comparator (tspcrdelta) core engine.
         //! @ingroup plugin
         //!
-        class Core: private WatchDogHandlerInterface
+        class Core
         {
             TS_NOBUILD_NOCOPY(Core);
         public:
@@ -63,7 +62,7 @@ namespace ts {
             //!
             //! Destructor.
             //!
-            virtual ~Core() override;
+            virtual ~Core();
 
             //!
             //! Start the @c tspcrdelta processing.
@@ -98,16 +97,10 @@ namespace ts {
             const PcrComparatorArgs& _opt;             // Command line options.
             InputExecutorVector      _inputs;          // Input plugins threads.
             Mutex           _mutex;            // Global mutex, protect access to all subsequent fields.
-            Condition       _gotInput;         // Signaled each time an input plugin reports new packets.
-            size_t          _curCycle;         // Current input cycle number.
-            volatile bool   _terminate;        // Terminate complete processing.
             PCRsVector      _pcrs;                 // A vector of lists of PCRs, where each list of PCRs is associated with a particular input plugin.
             int64_t         _pcr_delta_threshold_in_ms;  // Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
             std::ofstream   _output_stream;        // Output stream file
             std::ostream*   _output_file;          // Reference to actual output stream file
-
-            // Implementation of WatchDogHandlerInterface
-            virtual void handleWatchDogTimeout(WatchDog& watchdog) override;
 
             // Generate csv header
             void csvHeader();
