@@ -69,6 +69,11 @@ namespace ts {
             //!
             virtual ~InputExecutor() override;
 
+            //!
+            //! Terminate the input executor thread.
+            //!
+            void terminateInput();
+
             // Implementation of TSP.
             virtual size_t pluginIndex() const override;
 
@@ -79,6 +84,7 @@ namespace ts {
             TSPacketMetadataVector   _metadata;      // Packet metadata.
             Mutex                    _mutex;         // Mutex to protect all subsequent fields.
             Condition                _todo;          // Condition to signal something to do.
+            bool                     _terminate;    // Terminate thread.
             size_t                   _outFirst;      // Index of first packet to output in _buffer.
             size_t                   _outCount;      // Number of packets to output, not always contiguous, may wrap up.
             Monotonic                _start_time;    // Creation time in a monotonic clock.

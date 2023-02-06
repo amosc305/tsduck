@@ -125,7 +125,10 @@ bool ts::tspcrdelta::Core::start()
 
 void ts::tspcrdelta::Core::stop(bool success)
 {
-    return;
+    // Tell all input plugins to terminate.
+    for (size_t i = 0; success && i < _inputs.size(); ++i) {
+        _inputs[i]->terminateInput();
+    }
 }
 
 //----------------------------------------------------------------------------

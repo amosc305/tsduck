@@ -51,6 +51,7 @@ ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
     _metadata(opt.bufferedPackets),
     _mutex(),
     _todo(),
+    _terminate(false),
     _outFirst(0),
     _outCount(0),
     _start_time(true) // initialized with current system time
@@ -74,6 +75,20 @@ size_t ts::tspcrdelta::InputExecutor::pluginIndex() const
     return _pluginIndex;
 }
 
+
+//----------------------------------------------------------------------------
+// Terminate input.
+//----------------------------------------------------------------------------
+
+void ts::tspcrdelta::InputExecutor::terminateInput()
+{
+    debug(u"received terminate request");
+    GuardCondition lock(_mutex, _todo);
+    _terminate = true;
+    lock.signal();
+}
+
+
 //----------------------------------------------------------------------------
 // Invoked in the context of the plugin thread.
 //----------------------------------------------------------------------------
@@ -89,6 +104,11 @@ void ts::tspcrdelta::InputExecutor::main()
         const bool started = _input->start();
         debug(u"input plugin started, status: %s", {started});
 
+        // Exit main loop when termination is requested.
+        if (_terminate) {
+            break;
+        }
+
         // Loop on incoming packets.
         for (;;) {
 
@@ -101,7 +121,6 @@ void ts::tspcrdelta::InputExecutor::main()
                 // Wait for free buffer or stop.
                 GuardCondition lock(_mutex, _todo);
                 while (_outCount >= _buffer.size()) {
-                    // Not the current input plugin in --fast-switch mode.
                     // Drop older packets, free at most --max-input-packets.
                     assert(_outFirst < _buffer.size());
                     const size_t freeCount = std::min(_opt.maxInputPackets, _buffer.size() - _outFirst);
