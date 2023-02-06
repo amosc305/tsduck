@@ -44,11 +44,8 @@ ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, const PluginEventHandle
     _inputs(_opt.inputs.size(), nullptr),
     _mutex(),
     _gotInput(),
-    _curPlugin(0),
     _curCycle(0),
     _terminate(false),
-    _actions(),
-    _events(),
     _pcrs(),
     _pcr_delta_threshold_in_ms(1),
     _output_stream(),
@@ -106,9 +103,6 @@ bool ts::tspcrdelta::Core::start()
     // Output header
     csvHeader();
 
-    // Always start with the first input plugin.
-    _curPlugin = 0;
-
     // Start all input threads (but do not open the input "devices").
     bool success = true;
     for (size_t i = 0; success && i < _inputs.size(); ++i) {
@@ -131,17 +125,7 @@ bool ts::tspcrdelta::Core::start()
 
 void ts::tspcrdelta::Core::stop(bool success)
 {
-    // // Wake up all threads waiting for something on the compare object.
-    // {
-    //     GuardCondition lock(_mutex, _gotInput);
-    //     _terminate = true;
-    //     lock.signal();
-    // }
-
-    // // Tell all input plugins to terminate.
-    // for (size_t i = 0; success && i < _inputs.size(); ++i) {
-    //     _inputs[i]->terminateInput();
-    // }
+    return;
 }
 
 //----------------------------------------------------------------------------
@@ -152,186 +136,6 @@ void ts::tspcrdelta::Core::stop(bool success)
 void ts::tspcrdelta::Core::handleWatchDogTimeout(WatchDog& watchdog)
 {
     return;
-}
-
-
-//----------------------------------------------------------------------------
-// Names of actions for debug messages.
-//----------------------------------------------------------------------------
-
-const ts::Enumeration ts::tspcrdelta::Core::_actionNames({
-    {u"NONE",            NONE},
-    {u"START",           START},
-    {u"WAIT_STARTED",    WAIT_STARTED},
-    {u"WAIT_INPUT",      WAIT_INPUT},
-    {u"STOP",            STOP},
-    {u"WAIT_STOPPED",    WAIT_STOPPED},
-    {u"ABORT_INPUT",     ABORT_INPUT}
-});
-
-
-//----------------------------------------------------------------------------
-// Stringify an Action object.
-//----------------------------------------------------------------------------
-
-ts::UString ts::tspcrdelta::Core::Action::toString() const
-{
-    return UString::Format(u"%s, %d, %s", {_actionNames.name(type), index, flag});
-}
-
-
-//----------------------------------------------------------------------------
-// Operator "less" for containers of Action objects.
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::Core::Action::operator<(const Action& a) const
-{
-    if (type != a.type) {
-        return type < a.type;
-    }
-    else if (index != a.index) {
-        return index < a.index;
-    }
-    else {
-        return int(flag) < int(a.flag);
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Enqueue an action.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::Core::enqueue(const Action& action, bool highPriority)
-{
-    _log.debug(u"enqueue action %s", {action});
-    if (highPriority) {
-        _actions.push_front(action);
-    }
-    else {
-        _actions.push_back(action);
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Remove all instructions with type in bitmask.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::Core::cancelActions(int typeMask)
-{
-    for (auto it = _actions.begin(); it != _actions.end(); ) {
-        // Check if the current action is one that must be removed.
-        if ((int(it->type) & typeMask) != 0) {
-            // Yes, remove instruction.
-            _log.debug(u"cancel action %s", {*it});
-            it = _actions.erase(it);
-        }
-        else {
-            // No, keep it and move to next action.
-            ++it;
-        }
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Execute all commands until one needs to wait.
-//----------------------------------------------------------------------------
-
-void ts::tspcrdelta::Core::execute(const Action& event)
-{
-    // Set current event. Ignore flag in event.
-    const Action eventNoFlag(event, false);
-    if (event.type != NONE && !Contains(_events, eventNoFlag)) {
-        // The event was not present.
-        _events.insert(eventNoFlag);
-        _log.debug(u"setting event: %s", {event});
-    }
-
-    // Loop on all enqueued commands.
-    while (!_actions.empty()) {
-
-        // Inspect front command. Will be dequeued if executed.
-        const Action& action(_actions.front());
-        _log.debug(u"executing action %s", {action});
-        assert(action.index < _inputs.size());
-
-        // Try to execute the front command. Return if wait is required.
-        switch (action.type) {
-            case NONE: {
-                break;
-            }
-            case START: {
-                break;
-            }
-            case STOP: {
-                break;
-            }
-            case ABORT_INPUT: {
-                break;
-            }
-            case WAIT_STARTED:
-            case WAIT_INPUT:
-            case WAIT_STOPPED: {
-                // Wait commands, check if an event of this type is pending.
-                const auto it = _events.find(Action(action, false));
-                if (it == _events.end()) {
-                    // Event not found, cannot execute further, keep the action in queue and retry later.
-                    _log.debug(u"not ready, waiting: %s", {action});
-                    return;
-                }
-                // Clear the event.
-                _log.debug(u"clearing event: %s", {*it});
-                _events.erase(it);
-                break;
-            }
-            default: {
-                // Unknown action.
-                assert(false);
-            }
-        }
-
-        // Command executed, dequeue it.
-        _actions.pop_front();
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Report completion of input start (called by input plugins).
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::Core::inputStarted(size_t pluginIndex, bool success)
-{
-    GuardMutex lock(_mutex);
-
-    // Execute all commands if waiting on this event.
-    execute(Action(WAIT_STARTED, pluginIndex, success));
-
-    // Return false when the application terminates.
-    return !_terminate;
-}
-
-
-//----------------------------------------------------------------------------
-// Report input reception of packets (called by input plugins).
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::Core::inputReceived(size_t pluginIndex)
-{
-    GuardCondition lock(_mutex, _gotInput);
-
-    // Execute all commands if waiting on this event. This may change the current input.
-    execute(Action(WAIT_INPUT, pluginIndex));
-
-    if (pluginIndex == _curPlugin) {
-        // Wake up output plugin if it is sleeping, waiting for packets to output.
-        lock.signal();
-    }
-
-    // Return false when the application terminates.
-    return !_terminate;
 }
 
 
@@ -395,47 +199,6 @@ void ts::tspcrdelta::Core::comparePCRs(PCRsVector& pcrs)
             pcrList2.pop_front();
         }
     }
-}
-
-
-//----------------------------------------------------------------------------
-// Report completion of input session (called by input plugins).
-//----------------------------------------------------------------------------
-
-bool ts::tspcrdelta::Core::inputStopped(size_t pluginIndex, bool success)
-{
-    _log.debug(u"input %d completed, success: %s", {pluginIndex, success});
-    bool stopRequest = false;
-
-    // Locked sequence.
-    {
-        GuardMutex lock(_mutex);
-
-        // Count end of cycle when the last plugin terminates.
-        if (pluginIndex == _inputs.size() - 1) {
-            _curCycle++;
-        }
-
-        // Check if the complete processing is terminated.
-        stopRequest = _opt.terminate || (_opt.cycleCount > 0 && _curCycle >= _opt.cycleCount);
-
-        if (stopRequest) {
-            // Need to stop now. Remove any further action, except waiting for termination.
-            cancelActions(~WAIT_STOPPED);
-        }
-
-        // Execute all commands if waiting on this event.
-        execute(Action(WAIT_STOPPED, pluginIndex));
-    }
-
-    // Stop everything when we reach the end of the tspcrdelta processing.
-    // This must be done outside the locked sequence to avoid deadlocks.
-    if (stopRequest) {
-        stop(true);
-    }
-
-    // Return false when the application terminates.
-    return !_terminate;
 }
 
 

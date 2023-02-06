@@ -50,14 +50,10 @@ namespace ts {
     public:
         UString             appName;           //!< Application name, for help messages.
         bool                terminate;         //!< Terminate when one input plugin completes.
-        bool                reusePort;         //!< Reuse-port socket option.
         size_t              cycleCount;        //!< Number of input cycles to execute (0 = infinite).
         size_t              bufferedPackets;   //!< Input buffer size in packets.
         size_t              maxInputPackets;   //!< Maximum input packets to read at a time.
-        size_t              maxOutputPackets;  //!< Maximum output packets to send at a time.
-        size_t              sockBuffer;        //!< Socket buffer size.
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
-        PluginOptions       output;            //!< Output plugin description.
         UString             separator;         //!< Field separator
         bool                csv_format;        //!< Output in CSV format.
         bool                log_format;        //!< Output in log format.
@@ -65,8 +61,6 @@ namespace ts {
 
         static constexpr size_t      DEFAULT_MAX_INPUT_PACKETS = 128;  //!< Default maximum input packets to read at a time.
         static constexpr size_t      MIN_INPUT_PACKETS = 1;            //!< Minimum input packets to read at a time.
-        static constexpr size_t      DEFAULT_MAX_OUTPUT_PACKETS = 128; //!< Default maximum input packets to send at a time.
-        static constexpr size_t      MIN_OUTPUT_PACKETS = 1;           //!< Minimum input packets to send at a time.
         static constexpr size_t      DEFAULT_BUFFERED_PACKETS = 512;   //!< Default input size buffer in packets.
         static constexpr size_t      MIN_BUFFERED_PACKETS = 16;        //!< Minimum input size buffer in packets.
 

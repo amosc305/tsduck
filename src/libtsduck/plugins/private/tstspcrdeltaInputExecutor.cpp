@@ -88,14 +88,6 @@ void ts::tspcrdelta::InputExecutor::main()
         debug(u"starting input plugin");
         const bool started = _input->start();
         debug(u"input plugin started, status: %s", {started});
-        _core.inputStarted(_pluginIndex, started);
-
-        if (!started) {
-            // Failed to start.
-            _core.inputStopped(_pluginIndex, false);
-            // Loop back, waiting for a new session.
-            continue;
-        }
 
         // Loop on incoming packets.
         for (;;) {

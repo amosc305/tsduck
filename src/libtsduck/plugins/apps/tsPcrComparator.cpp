@@ -83,7 +83,6 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
             cmd.append(it.toString(PluginType::INPUT));
         }
         cmd.append(u" ");
-        cmd.append(args.output.toString(PluginType::OUTPUT));
         _report.debug(u"starting: %s", {cmd});
     }
 

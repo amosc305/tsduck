@@ -83,21 +83,6 @@ namespace ts {
             void waitForTermination();
 
             //!
-            //! Called by an input plugin when it started an input session.
-            //! @param [in] pluginIndex Index of the input plugin.
-            //! @param [in] success True if the start operation succeeded.
-            //! @return False when @c tspcrdelta is terminating.
-            //!
-            bool inputStarted(size_t pluginIndex, bool success);
-
-            //!
-            //! Called by an input plugin when it received input packets.
-            //! @param [in] pluginIndex Index of the input plugin.
-            //! @return False when @c tspcrdelta is terminating.
-            //!
-            bool inputReceived(size_t pluginIndex);
-
-            //!
             //! Called by an input plugin when it received input packets.
             //! @param [in] pkt Income TS packet.
             //! @param [in] count TS packet count.
@@ -105,51 +90,7 @@ namespace ts {
             //!
             void analyzePacket(TSPacket*& pkt, size_t count, size_t pluginIndex);
 
-            //!
-            //! Called by an input plugin when it stopped an input session.
-            //! @param [in] pluginIndex Index of the input plugin.
-            //! @param [in] success True if the stop operation succeeded.
-            //! @return False when @c tspcrdelta is terminating.
-            //!
-            bool inputStopped(size_t pluginIndex, bool success);
-
         private:
-            // Upon reception of an event (end of input, remote command, etc), there
-            // is a list of actions to execute which depends on the switch policy.
-            // Types of actions (can also be used as bit mask):
-            enum ActionType {
-                NONE            = 0x0001,  // Nothing to do.
-                START           = 0x0002,  // Start a plugin.
-                WAIT_STARTED    = 0x0004,  // Wait for start completion of a plugin.
-                WAIT_INPUT      = 0x0008,  // Wait for input packets on a plugin.
-                STOP            = 0x0010,  // Stop a plugin.
-                WAIT_STOPPED    = 0x0020,  // Wait for stop completion of a plugin.
-                ABORT_INPUT     = 0x0400,  // Abort current input if flags is true.
-            };
-
-            // Description of an action with its parameters.
-            class Action: public StringifyInterface
-            {
-            public:
-                ActionType type;   // Action to execute.
-                size_t     index;  // Input plugin index.
-                bool       flag;   // Boolean parameter (depends on the action).
-
-                // Constructor.
-                Action(ActionType t = NONE, size_t i = 0, bool f = false) : type(t), index(i), flag(f) {}
-
-                // Copy constructor, changing the flag.
-                Action(const Action& other, bool f) : type(other.type), index(other.index), flag(f) {}
-
-                // Implement StringifyInterface.
-                virtual UString toString() const override;
-
-                // Operator "less" for containers.
-                bool operator<(const Action& a) const;
-            };
-
-            typedef std::set<Action> ActionSet;
-            typedef std::deque<Action> ActionQueue;
             typedef std::list<uint64_t> PCRs;
             typedef std::vector<PCRs> PCRsVector;
 
@@ -158,28 +99,12 @@ namespace ts {
             InputExecutorVector      _inputs;          // Input plugins threads.
             Mutex           _mutex;            // Global mutex, protect access to all subsequent fields.
             Condition       _gotInput;         // Signaled each time an input plugin reports new packets.
-            size_t          _curPlugin;        // Index of current input plugin.
             size_t          _curCycle;         // Current input cycle number.
             volatile bool   _terminate;        // Terminate complete processing.
-            ActionQueue     _actions;          // Sequential queue list of actions to execute.
-            ActionSet       _events;           // Pending events, waiting to be cleared.
             PCRsVector      _pcrs;                 // A vector of lists of PCRs, where each list of PCRs is associated with a particular input plugin.
             int64_t         _pcr_delta_threshold_in_ms;  // Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
             std::ofstream   _output_stream;        // Output stream file
             std::ostream*   _output_file;          // Reference to actual output stream file
-
-            // Names of actions for debug messages.
-            static const Enumeration _actionNames;
-
-            // Enqueue an action (with mutex already held).
-            void enqueue(const Action& action, bool highPriority = false);
-
-            // Remove all instructions with type in bitmask (with mutex already held).
-            void cancelActions(int typeMask);
-
-            // Execute all commands until one needs to wait (with mutex already held).
-            // The event can be used to unlock a wait action.
-            void execute(const Action& event = Action());
 
             // Implementation of WatchDogHandlerInterface
             virtual void handleWatchDogTimeout(WatchDog& watchdog) override;
