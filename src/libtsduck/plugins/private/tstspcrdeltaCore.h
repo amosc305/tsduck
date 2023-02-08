@@ -87,26 +87,33 @@ namespace ts {
             //! @param [in] count TS packet count.
             //! @param [in] pluginIndex Index of the input plugin.
             //!
-            void analyzePacket(TSPacket*& pkt, size_t count, size_t pluginIndex);
+            void analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex);
 
         private:
-            typedef std::list<uint64_t> PCRs;
-            typedef std::vector<PCRs> PCRsVector;
+            typedef std::vector<uint64_t> pcrData;
+            typedef std::list<pcrData> pcrDataList;
+            typedef std::vector<pcrDataList> pcrDataListVector;
 
-            Report&                  _log;             // Asynchronous log report.
-            const PcrComparatorArgs& _opt;             // Command line options.
-            InputExecutorVector      _inputs;          // Input plugins threads.
-            Mutex           _mutex;            // Global mutex, protect access to all subsequent fields.
-            PCRsVector      _pcrs;                 // A vector of lists of PCRs, where each list of PCRs is associated with a particular input plugin.
-            int64_t         _pcr_delta_threshold_in_ms;  // Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
+            Report&                  _log;              // Asynchronous log report.
+            const PcrComparatorArgs& _opt;              // Command line options.
+            InputExecutorVector      _inputs;           // Input plugins threads.
+            Mutex                    _mutex;            // Global mutex, protect access to all subsequent fields.
+            pcrDataListVector        _pcrs;             // A vector of lists of PCR data, where each list of PCR data is associated with a particular input plugin.
+            int64_t         _pcr_delta_threshold_in_ms; // Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
             std::ofstream   _output_stream;        // Output stream file
             std::ostream*   _output_file;          // Reference to actual output stream file
 
             // Generate csv header
             void csvHeader();
 
-            // Compare different between two PCRs
-            void comparePCRs(PCRsVector& pcrs);
+            // Compare the different between two PCR data list
+            void comparePCR(pcrDataListVector& pcrs);
+
+            // Verify PCR data input timestamp
+            bool verifyPCRDataInputTimestamp(pcrData& data1, pcrData& data2);
+
+            // Reset all PCR data list
+            void resetPCRDataList();
         };
     }
 }

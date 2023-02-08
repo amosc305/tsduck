@@ -132,17 +132,18 @@ void ts::tspcrdelta::Core::stop(bool success)
 //----------------------------------------------------------------------------
 // Pass incoming TS packets for analyzing (called by input plugins).
 //----------------------------------------------------------------------------
-void ts::tspcrdelta::Core::analyzePacket(TSPacket*& pkt, size_t count, size_t pluginIndex)
+void ts::tspcrdelta::Core::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex)
 {
-    PCRs& pcrList = _pcrs.at(pluginIndex);
+    pcrDataList& pcrList = _pcrs.at(pluginIndex);
     for (size_t i = 0; i < count; i++)
     {
         GuardMutex lock(_mutex);
         uint64_t pcr = pkt[i].getPCR();
         const bool has_pcr = pcr != INVALID_PCR;
         if (has_pcr) {
-            pcrList.push_back(pcr);
-            comparePCRs(_pcrs);
+            uint64_t timestamp = metadata[i].getInputTimeStamp();
+            pcrList.push_back({pcr, timestamp});
+            comparePCR(_pcrs);
         }
     }
 }
@@ -166,28 +167,65 @@ void ts::tspcrdelta::Core::csvHeader()
 //----------------------------------------------------------------------------
 // Compare different between two PCRs
 //----------------------------------------------------------------------------
-void ts::tspcrdelta::Core::comparePCRs(PCRsVector& pcrs)
+void ts::tspcrdelta::Core::comparePCR(pcrDataListVector& pcrs)
 {
     if (pcrs.size() == 2) {
-        PCRs& pcrList1 = pcrs.at(0);
-        PCRs& pcrList2 = pcrs.at(1);
+        pcrDataList& pcrDataList1 = pcrs.at(0);
+        pcrDataList& pcrDataList2 = pcrs.at(1);
 
-        if (pcrList1.size() > 0 && pcrList2.size() > 0) {
-            int64_t pcrList1Front = pcrList1.front();
-            int64_t pcrList2Front = pcrList2.front();
-            int64_t pcrDelta = abs(pcrList1Front - pcrList2Front);
-            double pcrDeltaInMs = (double) pcrDelta / (90000 * 300) * 1000;
-            bool reachPcrDeltaThreshold = pcrDelta >= 0 && pcrDeltaInMs <= _pcr_delta_threshold_in_ms;
+        if (pcrDataList1.size() > 0 && pcrDataList2.size() > 0) {
+            pcrData pcrData1 = pcrDataList1.front();
+            pcrData pcrData2 = pcrDataList2.front();
 
-            *_output_file << pcrList1Front << _opt.separator
-                          << pcrList2Front << _opt.separator
-                          << pcrDelta << _opt.separator
-                          << pcrDeltaInMs << _opt.separator
-                          << reachPcrDeltaThreshold << std::endl;
+            // Make sure two PCR data are from the same time interval
+            bool pcrDataOutOfSync = verifyPCRDataInputTimestamp(pcrData1, pcrData2);
 
-            pcrList1.pop_front();
-            pcrList2.pop_front();
+            if (pcrDataOutOfSync) {
+                resetPCRDataList();
+            } else {
+                int64_t pcr1 = pcrData1.at(0);
+                int64_t pcr2 = pcrData2.at(0);
+                int64_t pcrDelta = abs(pcr1 - pcr2);
+                double pcrDeltaInMs = (double) pcrDelta/(90000*300)*1000;
+                bool reachPcrDeltaThreshold = pcrDelta >= 0 && pcrDeltaInMs <= _pcr_delta_threshold_in_ms;
+
+                *_output_file << pcr1 << _opt.separator
+                            << pcr2 << _opt.separator
+                            << pcrDelta << _opt.separator
+                            << pcrDeltaInMs << _opt.separator
+                            << reachPcrDeltaThreshold << std::endl;
+
+                pcrDataList1.pop_front();
+                pcrDataList2.pop_front();
+            }
+        } else if (pcrDataList1.size() > 10 || pcrDataList2.size() > 10) {
+            // Avoid one of the list become too large during input lost
+            resetPCRDataList();
         }
+    }
+}
+
+
+//----------------------------------------------------------------------------
+// Compare the times of two PCR data and check that they were retrieved at the same time interval
+//----------------------------------------------------------------------------
+bool ts::tspcrdelta::Core::verifyPCRDataInputTimestamp(pcrData& data1, pcrData& data2)
+{
+    int64_t timestampThreshold = 5; // Threshold of the different between two timestamp (in millisecond)
+    int64_t timestamp1 = data1.at(1);
+    int64_t timestamp2 = data2.at(1);
+    double timestampDiffInMs = (double) abs(timestamp1-timestamp2)/(90000*300)*1000;
+    return timestampDiffInMs > timestampThreshold;
+}
+
+
+//----------------------------------------------------------------------------
+// Reset all PCR data list
+//----------------------------------------------------------------------------
+void ts::tspcrdelta::Core::resetPCRDataList()
+{
+    for (size_t i = 0; i < _pcrs.size(); i++) {
+        _pcrs.at(i).clear();
     }
 }
 
@@ -195,7 +233,6 @@ void ts::tspcrdelta::Core::comparePCRs(PCRsVector& pcrs)
 //----------------------------------------------------------------------------
 // Wait for completion of all plugins.
 //----------------------------------------------------------------------------
-
 void ts::tspcrdelta::Core::waitForTermination()
 {
     // Wait for all input termination.

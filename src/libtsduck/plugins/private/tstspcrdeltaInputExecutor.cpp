@@ -161,7 +161,8 @@ void ts::tspcrdelta::InputExecutor::main()
 
             // Pass packet to tspcrdelta core for analyzing
             TSPacket* pkt = &_buffer[inFirst];
-            _core.analyzePacket(pkt, inCount, _pluginIndex);
+            TSPacketMetadata* metadata = &_metadata[inFirst];
+            _core.analyzePacket(pkt, metadata, inCount, _pluginIndex);
         }
     }
 }
