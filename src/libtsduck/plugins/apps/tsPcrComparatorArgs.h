@@ -52,9 +52,6 @@ namespace ts {
         size_t              bufferedPackets;   //!< Input buffer size in packets.
         size_t              maxInputPackets;   //!< Maximum input packets to read at a time.
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
-        UString             separator;         //!< Field separator
-        bool                csv_format;        //!< Output in CSV format.
-        bool                log_format;        //!< Output in log format.
         UString             output_name;       //!< Output file name (empty means stderr).
 
         static constexpr size_t      DEFAULT_MAX_INPUT_PACKETS = 128;  //!< Default maximum input packets to read at a time.
@@ -82,10 +79,9 @@ namespace ts {
         //!
         //! Load arguments from command line.
         //! Args error indicator is set in case of incorrect arguments.
-        //! @param [in,out] duck TSDuck execution context.
         //! @param [in,out] args Command line arguments.
         //! @return True on success, false on error in argument line.
         //!
-        bool loadArgs(DuckContext& duck, Args& args);
+        bool loadArgs(Args& args);
     };
 }

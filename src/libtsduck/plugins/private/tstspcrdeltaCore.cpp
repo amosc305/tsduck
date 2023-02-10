@@ -38,7 +38,7 @@
 // Constructor and destructor.
 //----------------------------------------------------------------------------
 
-ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, const PluginEventHandlerRegistry& handlers, Report& log) :
+ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, Report& log) :
     _log(log),
     _opt(opt),
     _inputs(_opt.inputs.size(), nullptr),
@@ -50,7 +50,7 @@ ts::tspcrdelta::Core::Core(const PcrComparatorArgs& opt, const PluginEventHandle
 {
     // Load all input plugins, analyze their options.
     for (size_t i = 0; i < _inputs.size(); ++i) {
-        _inputs[i] = new InputExecutor(opt, handlers, i, *this, log);
+        _inputs[i] = new InputExecutor(opt, i, *this, log);
         CheckNonNull(_inputs[i]);
         // Set the asynchronous logger as report method for all executors.
         _inputs[i]->setReport(&_log);
@@ -154,13 +154,11 @@ void ts::tspcrdelta::Core::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& meta
 //----------------------------------------------------------------------------
 void ts::tspcrdelta::Core::csvHeader()
 {
-    if (_opt.csv_format) {
-        *_output_file << "PCR1" << _opt.separator
-                      << "PCR2" << _opt.separator
-                      << "PCR Delta" << _opt.separator
-                      << "PCR Delta (ms)" << _opt.separator
-                      << "Sync" << std::endl;
-    }
+    *_output_file << "PCR1" << TS_DEFAULT_CSV_SEPARATOR
+                    << "PCR2" << TS_DEFAULT_CSV_SEPARATOR
+                    << "PCR Delta" << TS_DEFAULT_CSV_SEPARATOR
+                    << "PCR Delta (ms)" << TS_DEFAULT_CSV_SEPARATOR
+                    << "Sync" << std::endl;
 }
 
 
@@ -189,10 +187,10 @@ void ts::tspcrdelta::Core::comparePCR(pcrDataListVector& pcrs)
                 double pcrDeltaInMs = (double) pcrDelta/(90000*300)*1000;
                 bool reachPcrDeltaThreshold = pcrDelta >= 0 && pcrDeltaInMs <= _pcr_delta_threshold_in_ms;
 
-                *_output_file << pcr1 << _opt.separator
-                            << pcr2 << _opt.separator
-                            << pcrDelta << _opt.separator
-                            << pcrDeltaInMs << _opt.separator
+                *_output_file << pcr1 << TS_DEFAULT_CSV_SEPARATOR
+                            << pcr2 << TS_DEFAULT_CSV_SEPARATOR
+                            << pcrDelta << TS_DEFAULT_CSV_SEPARATOR
+                            << pcrDeltaInMs << TS_DEFAULT_CSV_SEPARATOR
                             << reachPcrDeltaThreshold << std::endl;
 
                 pcrDataList1.pop_front();

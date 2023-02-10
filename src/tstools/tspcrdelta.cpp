@@ -80,7 +80,7 @@ TSPcrDeltaOptions::TSPcrDeltaOptions(int argc, char *argv[]) :
 
     // Load option values.
     log_args.loadArgs(duck, *this);
-    comparator_args.loadArgs(duck, *this);
+    comparator_args.loadArgs(*this);
 
     // Final checking
     exitOnError();
@@ -106,7 +106,7 @@ int MainCode(int argc, char *argv[])
     ts::AsyncReport report(opt.maxSeverity(), opt.log_args);
 
     // The TS input processing is performed into this object.
-    ts::PcrComparator comparer(opt.comparator_args, report);
+    ts::PcrComparator comparator(opt.comparator_args, report);
 
-    return comparer.success() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return comparator.success() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

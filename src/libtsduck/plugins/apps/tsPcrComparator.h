@@ -33,7 +33,6 @@
 //----------------------------------------------------------------------------
 
 #pragma once
-#include "tsPluginEventHandlerRegistry.h"
 #include "tsPcrComparatorArgs.h"
 
 namespace ts {
@@ -48,7 +47,7 @@ namespace ts {
     //! This class is used by the @a tspcrdelta utility.
     //! @ingroup plugin
     //!
-    class TSDUCKDLL PcrComparator: public PluginEventHandlerRegistry
+    class TSDUCKDLL PcrComparator
     {
         TS_NOBUILD_NOCOPY(PcrComparator);
     public:

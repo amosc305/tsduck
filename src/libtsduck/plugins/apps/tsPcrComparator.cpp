@@ -36,7 +36,6 @@
 //----------------------------------------------------------------------------
 
 ts::PcrComparator::PcrComparator(Report& report) :
-    PluginEventHandlerRegistry(),
     _report(report),
     _args(),
     _core(nullptr),
@@ -90,7 +89,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
     _report.resetErrors();
 
     // Create the tspcrdelta core instance.
-    _core = new tspcrdelta::Core(_args, *this, _report);
+    _core = new tspcrdelta::Core(_args, _report);
     CheckNonNull(_core);
     _success = !_report.gotErrors();
 

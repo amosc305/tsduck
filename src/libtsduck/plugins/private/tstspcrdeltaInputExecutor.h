@@ -59,13 +59,11 @@ namespace ts {
             //!
             //! Constructor.
             //! @param [in] opt Command line options.
-            //! @param [in] handlers Registry of event handlers.
             //! @param [in] index Input plugin index.
             //! @param [in,out] core Command core instance.
             //! @param [in,out] log Log report.
             //!
             InputExecutor(const PcrComparatorArgs& opt,
-                          const PluginEventHandlerRegistry& handlers,
                           size_t index,
                           Core& core,
                           Report& log);

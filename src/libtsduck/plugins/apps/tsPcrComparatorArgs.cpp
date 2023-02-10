@@ -48,9 +48,6 @@ ts::PcrComparatorArgs::PcrComparatorArgs() :
     bufferedPackets(0),
     maxInputPackets(0),
     inputs(),
-    separator(),
-    csv_format(false),
-    log_format(false),
     output_name()
 {
 }
@@ -97,17 +94,6 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
     args.option(u"separator", 's', Args::STRING);
     args.help(u"separator", u"string",
               u"Field separator string in CSV output (default: '" TS_DEFAULT_CSV_SEPARATOR u"').");
-
-    args.option(u"csv", 'c');
-    args.help(u"csv",
-              u"Report data in CSV (comma-separated values) format. All values are reported "
-              u"in decimal. This is the default output format. It is suitable for later "
-              u"analysis using tools such as Microsoft Excel.");
-
-    args.option(u"log");
-    args.help(u"log",
-              u"Report data in \"log\" format through the standard tsp logging system. "
-              u"All values are reported in hexadecimal.");
 }
 
 
@@ -115,20 +101,12 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
 // Load arguments from command line.
 //----------------------------------------------------------------------------
 
-bool ts::PcrComparatorArgs::loadArgs(DuckContext& duck, Args& args)
+bool ts::PcrComparatorArgs::loadArgs(Args& args)
 {
     appName = args.appName();
     args.getIntValue(bufferedPackets, u"buffer-packets", DEFAULT_BUFFERED_PACKETS);
     maxInputPackets = std::min(args.intValue<size_t>(u"max-input-packets", DEFAULT_MAX_INPUT_PACKETS), bufferedPackets / 2);
-    separator = args.value(u"separator", TS_DEFAULT_CSV_SEPARATOR);
     output_name = args.value(u"output-file");
-    csv_format = args.present(u"csv");
-    log_format = args.present(u"log");
-
-    // Use CSV format by default.
-    if (!csv_format && !log_format) {
-        csv_format = true;
-    }
 
     // Load all plugin descriptions. Default output is the standard output file.
     ArgsWithPlugins* pargs = dynamic_cast<ArgsWithPlugins*>(&args);

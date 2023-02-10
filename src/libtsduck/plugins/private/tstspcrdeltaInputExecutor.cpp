@@ -38,7 +38,6 @@
 //----------------------------------------------------------------------------
 
 ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
-                                           const PluginEventHandlerRegistry& handlers,
                                            size_t index,
                                            Core& core,
                                            Report& log) :

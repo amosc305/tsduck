@@ -54,10 +54,9 @@ namespace ts {
             //!
             //! Constructor.
             //! @param [in] opt Command line options.
-            //! @param [in] handlers Registry of plugin event handlers.
             //! @param [in,out] log Log report.
             //!
-            Core(const PcrComparatorArgs& opt, const PluginEventHandlerRegistry& handlers, Report& log);
+            Core(const PcrComparatorArgs& opt, Report& log);
 
             //!
             //! Destructor.
