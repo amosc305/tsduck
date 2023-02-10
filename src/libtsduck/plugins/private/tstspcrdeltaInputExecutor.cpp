@@ -44,7 +44,9 @@ ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
                                            Report& log) :
 
     // Input threads have a high priority to be always ready to load incoming packets in the buffer.
-    PluginExecutor(opt, handlers, PluginType::INPUT, opt.inputs[index], ThreadAttributes().setPriority(ThreadAttributes::GetHighPriority()), core, log),
+    PluginThread(&log, opt.appName, PluginType::INPUT, opt.inputs[index], ThreadAttributes().setPriority(ThreadAttributes::GetHighPriority())),
+    _opt(opt),
+    _core(core),
     _input(dynamic_cast<InputPlugin*>(PluginThread::plugin())),
     _pluginIndex(index),
     _buffer(opt.bufferedPackets),
@@ -63,6 +65,39 @@ ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
 ts::tspcrdelta::InputExecutor::~InputExecutor()
 {
     waitForTermination();
+}
+
+
+//----------------------------------------------------------------------------
+// Implementation of TSP. We do not use "joint termination" in tspcrdelta.
+//----------------------------------------------------------------------------
+
+void ts::tspcrdelta::InputExecutor::useJointTermination(bool)
+{
+}
+
+void ts::tspcrdelta::InputExecutor::jointTerminate()
+{
+}
+
+bool ts::tspcrdelta::InputExecutor::useJointTermination() const
+{
+    return false;
+}
+
+bool ts::tspcrdelta::InputExecutor::thisJointTerminated() const
+{
+    return false;
+}
+
+size_t ts::tspcrdelta::InputExecutor::pluginCount() const
+{
+    // All inputs plus one output.
+    return _opt.inputs.size() + 1;
+}
+
+void ts::tspcrdelta::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
+{
 }
 
 

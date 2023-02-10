@@ -33,7 +33,10 @@
 //----------------------------------------------------------------------------
 
 #pragma once
-#include "tstspcrdeltaPluginExecutor.h"
+#include "tsPluginThread.h"
+#include "tsPcrComparatorArgs.h"
+#include "tsPluginEventHandlerRegistry.h"
+
 #include "tsPcrComparatorArgs.h"
 #include "tsInputPlugin.h"
 #include "tsMutex.h"
@@ -42,11 +45,14 @@
 
 namespace ts {
     namespace tspcrdelta {
+
+        class Core;
+    
         //!
         //! Execution context of a tspcrdelta input plugin.
         //! @ingroup plugin
         //!
-        class InputExecutor : public PluginExecutor
+        class InputExecutor : public PluginThread
         {
             TS_NOBUILD_NOCOPY(InputExecutor);
         public:
@@ -69,6 +75,14 @@ namespace ts {
             //!
             virtual ~InputExecutor() override;
 
+            // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
+            virtual void useJointTermination(bool) override;
+            virtual void jointTerminate() override;
+            virtual bool useJointTermination() const override;
+            virtual bool thisJointTerminated() const override;
+            virtual size_t pluginCount() const override;
+            virtual void signalPluginEvent(uint32_t event_code, Object* plugin_data = nullptr) const override;
+
             //!
             //! Terminate the input executor thread.
             //!
@@ -78,6 +92,8 @@ namespace ts {
             virtual size_t pluginIndex() const override;
 
         private:
+            const PcrComparatorArgs& _opt;   //!< Command line options.
+            Core&                    _core;  //!< Application core.
             InputPlugin*             _input;         // Plugin API.
             const size_t             _pluginIndex;   // Index of this input plugin.
             TSPacketVector           _buffer;        // Packet buffer.
