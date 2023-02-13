@@ -37,9 +37,6 @@
 #include "tsPcrComparator.h"
 #include "tsPcrComparatorArgs.h"
 #include "tsInputPlugin.h"
-#include "tsMutex.h"
-#include "tsCondition.h"
-#include "tsMonotonic.h"
 
 namespace ts {
     //!
@@ -91,12 +88,7 @@ namespace ts {
         const size_t             _pluginIndex; // Index of this input plugin.
         TSPacketVector           _buffer;      // Packet buffer.
         TSPacketMetadataVector   _metadata;    // Packet metadata.
-        Mutex                    _mutex;       // Mutex to protect all subsequent fields.
-        Condition                _todo;        // Condition to signal something to do.
         bool                     _terminate;   // Terminate thread.
-        size_t                   _outFirst;    // Index of first packet to output in _buffer.
-        size_t                   _outCount;    // Number of packets to output, not always contiguous, may wrap up.
-        Monotonic                _start_time;  // Creation time in a monotonic clock.
 
         static constexpr size_t      MAX_INPUT_PACKETS = 128;  // Maximum input packets to read at a time.
         static constexpr size_t      BUFFERED_PACKETS = 512;   // Input size buffer in packets.
