@@ -34,13 +34,11 @@
 
 #pragma once
 #include "tsPcrComparatorArgs.h"
+#include "tsMutex.h"
 
 namespace ts {
 
-    // Used in private part.
-    namespace tspcrdelta {
-        class Core;
-    }
+    class InputExecutor;
 
     //!
     //! Implementation of the PCR comparator
@@ -53,13 +51,15 @@ namespace ts {
     public:
         //!
         //! Constructor.
-        //! This constructor does not start the session.
+        //! The complete input comparing session is performed in this constructor.
+        //! The constructor returns only when the PCR comparator session terminates or fails tp start.
+        //! @param [in] args Arguments and options.
         //! @param [in,out] report Where to report errors, logs, etc.
         //! This object will be used concurrently by all plugin execution threads.
         //! Consequently, it must be thread-safe. For performance reasons, it should
         //! be asynchronous (see for instance class AsyncReport).
         //!
-        PcrComparator(Report& report);
+        PcrComparator(const PcrComparatorArgs& args, Report& report);
 
         //!
         //! Destructor.
@@ -81,12 +81,6 @@ namespace ts {
         bool start(const PcrComparatorArgs& args);
 
         //!
-        //! Check if the PCR comparator is started.
-        //! @return True if the PCR comparator is in progress, false otherwise.
-        //!
-        bool isStarted() const { return _core != nullptr; }
-
-        //!
         //! Stop the PCR comparator.
         //!
         void stop();
@@ -97,16 +91,12 @@ namespace ts {
         void waitForTermination();
 
         //!
-        //! Full session constructor.
-        //! The complete input comparing session is performed in this constructor.
-        //! The constructor returns only when the PCR comparator session terminates or fails tp start.
-        //! @param [in] args Arguments and options.
-        //! @param [in,out] report Where to report errors, logs, etc.
-        //! This object will be used concurrently by all plugin execution threads.
-        //! Consequently, it must be thread-safe. For performance reasons, it should
-        //! be asynchronous (see for instance class AsyncReport).
+        //! Called by an input plugin when it received input packets.
+        //! @param [in] pkt Income TS packet.
+        //! @param [in] count TS packet count.
+        //! @param [in] pluginIndex Index of the input plugin.
         //!
-        PcrComparator(const PcrComparatorArgs& args, Report& report);
+        void analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex);
 
         //!
         //! Check if the session, when completely run in the constructor, was successful.
@@ -115,12 +105,31 @@ namespace ts {
         bool success() const { return _success; }
 
     private:
+        typedef std::vector<InputExecutor*> InputExecutorVector;
+        typedef std::vector<uint64_t> pcrData;
+        typedef std::list<pcrData> pcrDataList;
+        typedef std::vector<pcrDataList> pcrDataListVector;
+
         Report&                    _report;
         PcrComparatorArgs          _args;
-        tspcrdelta::Core*            _core;
         volatile bool              _success;
+        InputExecutorVector        _inputs;           // Input plugins threads.
+        Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
+        pcrDataListVector          _pcrs;             // A vector of lists of PCR data, where each list of PCR data is associated with a particular input plugin.
+        int64_t                    _pcr_delta_threshold_in_ms; // Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
+        std::ofstream              _output_stream;    // Output stream file
+        std::ostream*              _output_file;      // Reference to actual output stream file
 
-        // Internal and unconditional cleanup of resources.
-        void internalCleanup();
+        // Generate csv header
+        void csvHeader();
+
+        // Compare the different between two PCR data list
+        void comparePCR(pcrDataListVector& pcrs);
+
+        // Verify PCR data input timestamp
+        bool verifyPCRDataInputTimestamp(pcrData& data1, pcrData& data2);
+
+        // Reset all PCR data list
+        void resetPCRDataList();
     };
 }

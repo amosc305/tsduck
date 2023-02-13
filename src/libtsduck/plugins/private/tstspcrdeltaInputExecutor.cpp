@@ -28,24 +28,23 @@
 //----------------------------------------------------------------------------
 
 #include "tstspcrdeltaInputExecutor.h"
-#include "tstspcrdeltaCore.h"
+#include "tsPcrComparator.h"
 #include "tsGuardMutex.h"
 #include "tsGuardCondition.h"
-
 
 //----------------------------------------------------------------------------
 // Constructor and destructor.
 //----------------------------------------------------------------------------
 
-ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
-                                           size_t index,
-                                           Core& core,
-                                           Report& log) :
+ts::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
+                                    size_t index,
+                                    PcrComparator& comparator,
+                                    Report& log) :
 
     // Input threads have a high priority to be always ready to load incoming packets in the buffer.
     PluginThread(&log, opt.appName, PluginType::INPUT, opt.inputs[index], ThreadAttributes().setPriority(ThreadAttributes::GetHighPriority())),
     _opt(opt),
-    _core(core),
+    _comparator(comparator),
     _input(dynamic_cast<InputPlugin*>(PluginThread::plugin())),
     _pluginIndex(index),
     _buffer(opt.bufferedPackets),
@@ -61,7 +60,7 @@ ts::tspcrdelta::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
     setLogName(UString::Format(u"%s[%d]", {pluginName(), _pluginIndex}));
 }
 
-ts::tspcrdelta::InputExecutor::~InputExecutor()
+ts::InputExecutor::~InputExecutor()
 {
     waitForTermination();
 }
@@ -71,31 +70,31 @@ ts::tspcrdelta::InputExecutor::~InputExecutor()
 // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
 //----------------------------------------------------------------------------
 
-void ts::tspcrdelta::InputExecutor::useJointTermination(bool)
+void ts::InputExecutor::useJointTermination(bool)
 {
 }
 
-void ts::tspcrdelta::InputExecutor::jointTerminate()
+void ts::InputExecutor::jointTerminate()
 {
 }
 
-bool ts::tspcrdelta::InputExecutor::useJointTermination() const
-{
-    return false;
-}
-
-bool ts::tspcrdelta::InputExecutor::thisJointTerminated() const
+bool ts::InputExecutor::useJointTermination() const
 {
     return false;
 }
 
-size_t ts::tspcrdelta::InputExecutor::pluginCount() const
+bool ts::InputExecutor::thisJointTerminated() const
+{
+    return false;
+}
+
+size_t ts::InputExecutor::pluginCount() const
 {
     // All inputs plus one output.
     return _opt.inputs.size() + 1;
 }
 
-void ts::tspcrdelta::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
+void ts::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
 {
 }
 
@@ -104,7 +103,7 @@ void ts::tspcrdelta::InputExecutor::signalPluginEvent(uint32_t event_code, Objec
 // Implementation of TSP.
 //----------------------------------------------------------------------------
 
-size_t ts::tspcrdelta::InputExecutor::pluginIndex() const
+size_t ts::InputExecutor::pluginIndex() const
 {
     return _pluginIndex;
 }
@@ -114,7 +113,7 @@ size_t ts::tspcrdelta::InputExecutor::pluginIndex() const
 // Terminate input.
 //----------------------------------------------------------------------------
 
-void ts::tspcrdelta::InputExecutor::terminateInput()
+void ts::InputExecutor::terminateInput()
 {
     debug(u"received terminate request");
     GuardCondition lock(_mutex, _todo);
@@ -127,7 +126,7 @@ void ts::tspcrdelta::InputExecutor::terminateInput()
 // Invoked in the context of the plugin thread.
 //----------------------------------------------------------------------------
 
-void ts::tspcrdelta::InputExecutor::main()
+void ts::InputExecutor::main()
 {
     debug(u"input thread started");
 
@@ -193,10 +192,10 @@ void ts::tspcrdelta::InputExecutor::main()
                 }
             }
 
-            // Pass packet to tspcrdelta core for analyzing
+            // Pass packet to comparator for analyzing
             TSPacket* pkt = &_buffer[inFirst];
             TSPacketMetadata* metadata = &_metadata[inFirst];
-            _core.analyzePacket(pkt, metadata, inCount, _pluginIndex);
+            _comparator.analyzePacket(pkt, metadata, inCount, _pluginIndex);
         }
     }
 }

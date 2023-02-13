@@ -34,9 +34,7 @@
 
 #pragma once
 #include "tsPluginThread.h"
-#include "tsPcrComparatorArgs.h"
-#include "tsPluginEventHandlerRegistry.h"
-
+#include "tsPcrComparator.h"
 #include "tsPcrComparatorArgs.h"
 #include "tsInputPlugin.h"
 #include "tsMutex.h"
@@ -44,72 +42,63 @@
 #include "tsMonotonic.h"
 
 namespace ts {
-    namespace tspcrdelta {
+    //!
+    //! Execution context of a tspcrdelta input plugin.
+    //! @ingroup plugin
+    //!
+    class InputExecutor : public PluginThread
+    {
+        TS_NOBUILD_NOCOPY(InputExecutor);
 
-        class Core;
-    
+    public:
         //!
-        //! Execution context of a tspcrdelta input plugin.
-        //! @ingroup plugin
+        //! Constructor.
+        //! @param [in] opt Command line options.
+        //! @param [in] index Input plugin index.
+        //! @param [in,out] comparator Comparator instance
+        //! @param [in,out] log Log report.
         //!
-        class InputExecutor : public PluginThread
-        {
-            TS_NOBUILD_NOCOPY(InputExecutor);
-        public:
-            //!
-            //! Constructor.
-            //! @param [in] opt Command line options.
-            //! @param [in] index Input plugin index.
-            //! @param [in,out] core Command core instance.
-            //! @param [in,out] log Log report.
-            //!
-            InputExecutor(const PcrComparatorArgs& opt,
-                          size_t index,
-                          Core& core,
-                          Report& log);
-
-            //!
-            //! Virtual destructor.
-            //!
-            virtual ~InputExecutor() override;
-
-            // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
-            virtual void useJointTermination(bool) override;
-            virtual void jointTerminate() override;
-            virtual bool useJointTermination() const override;
-            virtual bool thisJointTerminated() const override;
-            virtual size_t pluginCount() const override;
-            virtual void signalPluginEvent(uint32_t event_code, Object* plugin_data = nullptr) const override;
-
-            //!
-            //! Terminate the input executor thread.
-            //!
-            void terminateInput();
-
-            // Implementation of TSP.
-            virtual size_t pluginIndex() const override;
-
-        private:
-            const PcrComparatorArgs& _opt;   //!< Command line options.
-            Core&                    _core;  //!< Application core.
-            InputPlugin*             _input;         // Plugin API.
-            const size_t             _pluginIndex;   // Index of this input plugin.
-            TSPacketVector           _buffer;        // Packet buffer.
-            TSPacketMetadataVector   _metadata;      // Packet metadata.
-            Mutex                    _mutex;         // Mutex to protect all subsequent fields.
-            Condition                _todo;          // Condition to signal something to do.
-            bool                     _terminate;    // Terminate thread.
-            size_t                   _outFirst;      // Index of first packet to output in _buffer.
-            size_t                   _outCount;      // Number of packets to output, not always contiguous, may wrap up.
-            Monotonic                _start_time;    // Creation time in a monotonic clock.
-
-            // Implementation of Thread.
-            virtual void main() override;
-        };
+        InputExecutor(const PcrComparatorArgs &opt,
+                      size_t index,
+                      PcrComparator &comparator,
+                      Report &log);
 
         //!
-        //! Vector of pointers to InputExecutor.
+        //! Virtual destructor.
         //!
-        typedef std::vector<InputExecutor*> InputExecutorVector;
-    }
+        virtual ~InputExecutor() override;
+
+        // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
+        virtual void useJointTermination(bool) override;
+        virtual void jointTerminate() override;
+        virtual bool useJointTermination() const override;
+        virtual bool thisJointTerminated() const override;
+        virtual size_t pluginCount() const override;
+        virtual void signalPluginEvent(uint32_t event_code, Object *plugin_data = nullptr) const override;
+
+        //!
+        //! Terminate the input executor thread.
+        //!
+        void terminateInput();
+
+        // Implementation of TSP.
+        virtual size_t pluginIndex() const override;
+
+    private:
+        const PcrComparatorArgs& _opt;         //!< Command line options.
+        PcrComparator&           _comparator;  // Comparator instance
+        InputPlugin*             _input;       // Plugin API.
+        const size_t             _pluginIndex; // Index of this input plugin.
+        TSPacketVector           _buffer;      // Packet buffer.
+        TSPacketMetadataVector   _metadata;    // Packet metadata.
+        Mutex                    _mutex;       // Mutex to protect all subsequent fields.
+        Condition                _todo;        // Condition to signal something to do.
+        bool                     _terminate;   // Terminate thread.
+        size_t                   _outFirst;    // Index of first packet to output in _buffer.
+        size_t                   _outCount;    // Number of packets to output, not always contiguous, may wrap up.
+        Monotonic                _start_time;  // Creation time in a monotonic clock.
+
+        // Implementation of Thread.
+        virtual void main() override;
+    };
 }
