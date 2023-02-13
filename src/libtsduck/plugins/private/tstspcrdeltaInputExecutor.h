@@ -98,6 +98,9 @@ namespace ts {
         size_t                   _outCount;    // Number of packets to output, not always contiguous, may wrap up.
         Monotonic                _start_time;  // Creation time in a monotonic clock.
 
+        static constexpr size_t      MAX_INPUT_PACKETS = 128;  // Maximum input packets to read at a time.
+        static constexpr size_t      BUFFERED_PACKETS = 512;   // Input size buffer in packets.
+
         // Implementation of Thread.
         virtual void main() override;
     };

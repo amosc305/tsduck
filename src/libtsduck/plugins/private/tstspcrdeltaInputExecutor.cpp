@@ -32,6 +32,11 @@
 #include "tsGuardMutex.h"
 #include "tsGuardCondition.h"
 
+#if defined(TS_NEED_STATIC_CONST_DEFINITIONS)
+constexpr size_t ts::InputExecutor::MAX_INPUT_PACKETS;
+constexpr size_t ts::InputExecutor::BUFFERED_PACKETS;
+#endif
+
 //----------------------------------------------------------------------------
 // Constructor and destructor.
 //----------------------------------------------------------------------------
@@ -47,8 +52,8 @@ ts::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
     _comparator(comparator),
     _input(dynamic_cast<InputPlugin*>(PluginThread::plugin())),
     _pluginIndex(index),
-    _buffer(opt.bufferedPackets),
-    _metadata(opt.bufferedPackets),
+    _buffer(BUFFERED_PACKETS),
+    _metadata(BUFFERED_PACKETS),
     _mutex(),
     _todo(),
     _terminate(false),
@@ -156,7 +161,7 @@ void ts::InputExecutor::main()
                 while (_outCount >= _buffer.size()) {
                     // Drop older packets, free at most --max-input-packets.
                     assert(_outFirst < _buffer.size());
-                    const size_t freeCount = std::min(_opt.maxInputPackets, _buffer.size() - _outFirst);
+                    const size_t freeCount = std::min(MAX_INPUT_PACKETS, _buffer.size() - _outFirst);
                     assert(freeCount <= _outCount);
                     _outFirst = (_outFirst + freeCount) % _buffer.size();
                     _outCount -= freeCount;
@@ -165,7 +170,7 @@ void ts::InputExecutor::main()
                 // There is some free buffer, compute first index and size of receive area.
                 // The receive area is limited by end of buffer and max input size.
                 inFirst = (_outFirst + _outCount) % _buffer.size();
-                inCount = std::min(_opt.maxInputPackets, std::min(_buffer.size() - _outCount, _buffer.size() - inFirst));
+                inCount = std::min(MAX_INPUT_PACKETS, std::min(_buffer.size() - _outCount, _buffer.size() - inFirst));
             }
 
             assert(inFirst < _buffer.size());

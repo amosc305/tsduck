@@ -39,7 +39,6 @@
 namespace ts {
 
     class Args;
-    class DuckContext;
 
     //!
     //! Transport stream PCR comparator command-line options
@@ -49,26 +48,15 @@ namespace ts {
     {
     public:
         UString             appName;           //!< Application name, for help messages.
-        size_t              bufferedPackets;   //!< Input buffer size in packets.
-        size_t              maxInputPackets;   //!< Maximum input packets to read at a time.
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
         UString             output_name;       //!< Output file name (empty means stderr).
 
-        static constexpr size_t      DEFAULT_MAX_INPUT_PACKETS = 128;  //!< Default maximum input packets to read at a time.
-        static constexpr size_t      MIN_INPUT_PACKETS = 1;            //!< Minimum input packets to read at a time.
-        static constexpr size_t      DEFAULT_BUFFERED_PACKETS = 512;   //!< Default input size buffer in packets.
-        static constexpr size_t      MIN_BUFFERED_PACKETS = 16;        //!< Minimum input size buffer in packets.
-        static constexpr int         DESIGNATED_INPUT_PLUGIN_NUMBER = 2; //!< Designated input plugin allowed.
+        static constexpr int DESIGNATED_INPUT_PLUGIN_NUMBER = 2; //!< Designated input plugin allowed.
 
         //!
         //! Constructor.
         //!
         PcrComparatorArgs();
-
-        //!
-        //! Enforce default or minimum values.
-        //!
-        void enforceDefaults();
 
         //!
         //! Add command line option definitions in an Args.

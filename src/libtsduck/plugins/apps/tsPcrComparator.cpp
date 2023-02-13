@@ -45,9 +45,6 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
     _output_stream(),
     _output_file(nullptr)
 {
-    // Keep command line options for further use.
-    _args.enforceDefaults();
-
     // Debug message.
     if (_report.debug()) {
         UString cmd(args.appName);
