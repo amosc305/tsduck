@@ -42,10 +42,7 @@
 #include "tsMain.h"
 #include "tsArgsWithPlugins.h"
 #include "tsPcrComparator.h"
-#include "tsPluginRepository.h"
-#include "tsSystemMonitor.h"
 #include "tsAsyncReport.h"
-#include "tsCerrReport.h"
 TS_MAIN(MainCode);
 
 
