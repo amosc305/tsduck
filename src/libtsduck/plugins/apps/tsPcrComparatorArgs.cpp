@@ -90,10 +90,6 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
     args.option(u"output-file", 'o', Args::FILENAME);
     args.help(u"output-file", u"filename",
               u"Output file name for CSV reporting (standard error by default).");
-    
-    args.option(u"separator", 's', Args::STRING);
-    args.help(u"separator", u"string",
-              u"Field separator string in CSV output (default: '" TS_DEFAULT_CSV_SEPARATOR u"').");
 }
 
 
