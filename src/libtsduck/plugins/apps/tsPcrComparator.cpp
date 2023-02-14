@@ -115,7 +115,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
     // Output header
     csvHeader();
 
-    // Start all input threads (but do not open the input "devices").
+    // Start all input threads
     for (size_t i = 0; i < _inputs.size(); ++i) {
         // Here, start() means start the thread, and start input plugin.
         _success = _inputs[i]->start();

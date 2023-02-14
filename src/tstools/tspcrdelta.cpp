@@ -31,7 +31,7 @@
 //
 //  Implementation notes:
 //
-//  The class Core implements the core function of tspcrdelta. It is used
+//  The class tsPcrComparator implements the core function of tspcrdelta. It is used
 //  by all other classes to get their instructions and report their status.
 //
 //  Each instance of the class InputExecutor implements a thread running one
@@ -64,7 +64,7 @@ namespace {
 }
 
 TSPcrDeltaOptions::TSPcrDeltaOptions(int argc, char *argv[]) :
-    ts::ArgsWithPlugins(0, UNLIMITED_COUNT, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[tspcrdelta-options]"),
+    ts::ArgsWithPlugins(2, 2, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[tspcrdelta-options]"),
     duck(this),
     log_args(),
     comparator_args()
@@ -92,12 +92,6 @@ int MainCode(int argc, char *argv[])
 {
     // Get command line options.
     TSPcrDeltaOptions opt(argc, argv);
-    CERR.setMaxSeverity(opt.maxSeverity());
-
-    // If plugins were statically linked, disallow the dynamic loading of plugins.
-#if defined(TSDUCK_STATIC_PLUGINS)
-    ts::PluginRepository::Instance()->setSharedLibraryAllowed(false);
-#endif
 
     // Create and start an asynchronous log (separate thread).
     ts::AsyncReport report(opt.maxSeverity(), opt.log_args);

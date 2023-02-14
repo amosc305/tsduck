@@ -94,11 +94,6 @@ void ts::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_da
 {
 }
 
-
-//----------------------------------------------------------------------------
-// Implementation of TSP.
-//----------------------------------------------------------------------------
-
 size_t ts::InputExecutor::pluginIndex() const
 {
     return _pluginIndex;

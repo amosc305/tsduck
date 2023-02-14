@@ -30,11 +30,6 @@
 #include "tsPcrComparatorArgs.h"
 #include "tsArgsWithPlugins.h"
 
-#if defined(TS_NEED_STATIC_CONST_DEFINITIONS)
-constexpr int ts::PcrComparatorArgs::DESIGNATED_INPUT_PLUGIN_NUMBER;
-#endif
-
-
 //----------------------------------------------------------------------------
 // Constructors.
 //----------------------------------------------------------------------------
@@ -72,11 +67,6 @@ bool ts::PcrComparatorArgs::loadArgs(Args& args)
     ArgsWithPlugins* pargs = dynamic_cast<ArgsWithPlugins*>(&args);
     if (pargs != nullptr) {
         pargs->getPlugins(inputs, PluginType::INPUT);
-    }
-
-    // Check number of input plugins
-    if (inputs.size() != DESIGNATED_INPUT_PLUGIN_NUMBER) {
-        args.error(u"Number of input plugins must be %d", {DESIGNATED_INPUT_PLUGIN_NUMBER});
     }
 
     return args.valid();

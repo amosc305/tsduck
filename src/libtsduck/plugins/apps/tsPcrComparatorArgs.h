@@ -51,8 +51,6 @@ namespace ts {
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
         UString             output_name;       //!< Output file name (empty means stderr).
 
-        static constexpr int DESIGNATED_INPUT_PLUGIN_NUMBER = 2; //!< Designated input plugin allowed.
-
         //!
         //! Constructor.
         //!

@@ -72,14 +72,12 @@ namespace ts {
         virtual bool thisJointTerminated() const override;
         virtual size_t pluginCount() const override;
         virtual void signalPluginEvent(uint32_t event_code, Object *plugin_data = nullptr) const override;
+        virtual size_t pluginIndex() const override;
 
         //!
         //! Terminate the input executor thread.
         //!
         void terminateInput();
-
-        // Implementation of TSP.
-        virtual size_t pluginIndex() const override;
 
     private:
         const PcrComparatorArgs& _opt;         //!< Command line options.
