@@ -126,19 +126,6 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
 
 
 //----------------------------------------------------------------------------
-// Delegations to core object.
-//----------------------------------------------------------------------------
-
-void ts::PcrComparator::stop()
-{
-    // Tell all input plugins to terminate.
-    for (size_t i = 0; _success && i < _inputs.size(); ++i) {
-        _inputs[i]->terminateInput();
-    }
-}
-
-
-//----------------------------------------------------------------------------
 // Pass incoming TS packets for analyzing (called by input plugins).
 //----------------------------------------------------------------------------
 void ts::PcrComparator::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex)

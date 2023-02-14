@@ -88,7 +88,6 @@ namespace ts {
         const size_t             _pluginIndex; // Index of this input plugin.
         TSPacketVector           _buffer;      // Packet buffer.
         TSPacketMetadataVector   _metadata;    // Packet metadata.
-        bool                     _terminate;   // Terminate thread.
 
         static constexpr size_t      MAX_INPUT_PACKETS = 128;  // Maximum input packets to read at a time.
         static constexpr size_t      BUFFERED_PACKETS = 512;   // Input size buffer in packets.

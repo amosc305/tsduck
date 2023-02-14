@@ -51,8 +51,7 @@ ts::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
     _input(dynamic_cast<InputPlugin*>(PluginThread::plugin())),
     _pluginIndex(index),
     _buffer(BUFFERED_PACKETS),
-    _metadata(BUFFERED_PACKETS),
-    _terminate(false)
+    _metadata(BUFFERED_PACKETS)
 {
     // Make sure that the input plugins display their index.
     setLogName(UString::Format(u"%s[%d]", {pluginName(), _pluginIndex}));
@@ -107,17 +106,6 @@ size_t ts::InputExecutor::pluginIndex() const
 
 
 //----------------------------------------------------------------------------
-// Terminate input.
-//----------------------------------------------------------------------------
-
-void ts::InputExecutor::terminateInput()
-{
-    debug(u"received terminate request");
-    _terminate = true;
-}
-
-
-//----------------------------------------------------------------------------
 // Invoked in the context of the plugin thread.
 //----------------------------------------------------------------------------
 
@@ -132,14 +120,8 @@ void ts::InputExecutor::main()
         const bool started = _input->start();
         debug(u"input plugin started, status: %s", {started});
 
-        // Exit main loop when termination is requested.
-        if (_terminate) {
-            break;
-        }
-
         // Loop on incoming packets.
         for (;;) {
-
             // Input area (first packet index and packet count).
             size_t inFirst = 0;
             size_t inCount = MAX_INPUT_PACKETS;

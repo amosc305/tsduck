@@ -81,11 +81,6 @@ namespace ts {
         bool start(const PcrComparatorArgs& args);
 
         //!
-        //! Stop the PCR comparator.
-        //!
-        void stop();
-
-        //!
         //! Suspend the calling thread until PCR comparator is completed.
         //!
         void waitForTermination();
