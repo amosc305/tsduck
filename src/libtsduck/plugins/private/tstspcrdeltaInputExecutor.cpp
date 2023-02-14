@@ -126,14 +126,8 @@ void ts::InputExecutor::main()
             size_t inFirst = 0;
             size_t inCount = MAX_INPUT_PACKETS;
 
-            // Assertion failure if inFirst or inFirst + inCount larger than buffer size
-            assert(inFirst < _buffer.size());
+            // Assertion failure if inFirst + inCount larger than buffer size
             assert(inFirst + inCount <= _buffer.size());
-
-            // Reset packet metadata.
-            for (size_t n = inFirst; n < inFirst + inCount; ++n) {
-                _metadata[n].reset();
-            }
 
             // Receive packets.
             if ((inCount = _input->receive(&_buffer[inFirst], &_metadata[inFirst], inCount)) == 0) {
