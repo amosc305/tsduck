@@ -111,7 +111,7 @@ namespace ts {
         InputExecutorVector        _inputs;           // Input plugins threads.
         Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
         pcrDataListVector          _pcrs;             // A vector of lists of PCR data, where each list of PCR data is associated with a particular input plugin.
-        int64_t                    _latency_threshold; // Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
+        int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
         std::ofstream              _output_stream;    // Output stream file
         std::ostream*              _output_file;      // Reference to actual output stream file
 
