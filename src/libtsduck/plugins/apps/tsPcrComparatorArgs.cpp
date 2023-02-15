@@ -37,7 +37,8 @@
 ts::PcrComparatorArgs::PcrComparatorArgs() :
     appName(),
     inputs(),
-    output_name()
+    outputName(),
+    latencyThreshold(0)
 {
 }
 
@@ -51,6 +52,11 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
     args.option(u"output-file", 'o', Args::FILENAME);
     args.help(u"output-file", u"filename",
               u"Output file name for CSV reporting (standard error by default).");
+
+    args.option(u"latency", 0, Args::UNSIGNED);
+    args.help(u"latency",
+              u"Specify the latency threshold between two inputs in millisecond (1 ms = 0.001s)."
+              u"By default, the latency threshold is 0 ms");
 }
 
 
@@ -61,7 +67,8 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
 bool ts::PcrComparatorArgs::loadArgs(Args& args)
 {
     appName = args.appName();
-    output_name = args.value(u"output-file");
+    outputName = args.value(u"output-file");
+    args.getIntValue(latencyThreshold, u"latency", 0);
 
     // Load all plugin descriptions. Default output is the standard output file.
     ArgsWithPlugins* pargs = dynamic_cast<ArgsWithPlugins*>(&args);

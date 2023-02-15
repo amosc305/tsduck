@@ -49,7 +49,8 @@ namespace ts {
     public:
         UString             appName;           //!< Application name, for help messages.
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
-        UString             output_name;       //!< Output file name (empty means stderr).
+        UString             outputName;       //!< Output file name (empty means stderr).
+        int64_t             latencyThreshold; //!< Latency threshold between two inputs
 
         //!
         //! Constructor.

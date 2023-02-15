@@ -41,7 +41,7 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
     _inputs(args.inputs.size(), nullptr),
     _mutex(),
     _pcrs(),
-    _pcr_delta_threshold_in_ms(1),
+    _latency_threshold(args.latencyThreshold),
     _output_stream(),
     _output_file(nullptr)
 {
@@ -101,12 +101,12 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
     }
 
     // Create the output file if there is one
-    if (_args.output_name.empty()) {
+    if (_args.outputName.empty()) {
         _output_file = &std::cerr;
     }
     else {
         _output_file = &_output_stream;
-        _output_stream.open(_args.output_name.toUTF8().c_str());
+        _output_stream.open(_args.outputName.toUTF8().c_str());
         if (!_output_stream) {
             return false;
         }
@@ -153,7 +153,7 @@ void ts::PcrComparator::csvHeader()
     *_output_file << "PCR1" << TS_DEFAULT_CSV_SEPARATOR
                     << "PCR2" << TS_DEFAULT_CSV_SEPARATOR
                     << "PCR Delta" << TS_DEFAULT_CSV_SEPARATOR
-                    << "PCR Delta (ms)" << TS_DEFAULT_CSV_SEPARATOR
+                    << "Latency (ms)" << TS_DEFAULT_CSV_SEPARATOR
                     << "Sync" << std::endl;
 }
 
@@ -180,14 +180,15 @@ void ts::PcrComparator::comparePCR(pcrDataListVector& pcrs)
                 int64_t pcr1 = pcrData1.at(0);
                 int64_t pcr2 = pcrData2.at(0);
                 int64_t pcrDelta = abs(pcr1 - pcr2);
-                double pcrDeltaInMs = (double) pcrDelta/(90000*300)*1000;
-                bool reachPcrDeltaThreshold = pcrDelta >= 0 && pcrDeltaInMs <= _pcr_delta_threshold_in_ms;
+                double latency = (double) pcrDelta/(90000*300)*1000;
+                bool reachLatencyThreshold = pcrDelta >= 0 && latency <= _latency_threshold;
 
                 *_output_file << pcr1 << TS_DEFAULT_CSV_SEPARATOR
                             << pcr2 << TS_DEFAULT_CSV_SEPARATOR
                             << pcrDelta << TS_DEFAULT_CSV_SEPARATOR
-                            << pcrDeltaInMs << TS_DEFAULT_CSV_SEPARATOR
-                            << reachPcrDeltaThreshold << std::endl;
+                            << latency << TS_DEFAULT_CSV_SEPARATOR
+                            << std::boolalpha << reachLatencyThreshold 
+                            << std::noboolalpha << std::endl;
 
                 pcrDataList1.pop_front();
                 pcrDataList2.pop_front();
