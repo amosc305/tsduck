@@ -48,11 +48,10 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
     if (_report.debug()) {
         UString cmd(args.appName);
         cmd.append(u" ");
-        for (const auto& it : args.inputs) {
+        for (const auto& input : args.inputs) {
             cmd.append(u" ");
-            cmd.append(it.toString(PluginType::INPUT));
+            cmd.append(input.toString(PluginType::INPUT));
         }
-        cmd.append(u" ");
         _report.debug(u"starting: %s", {cmd});
     }
 
