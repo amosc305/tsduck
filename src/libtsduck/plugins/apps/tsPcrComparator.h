@@ -140,7 +140,7 @@ namespace ts {
         void comparePCR(InputDataVector& inputs);
 
         // Verify PCR data input timestamp
-        bool verifyPCRDataInputTimestamp(uint64_t timestamp1, uint64_t timestamp2);
+        bool verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2);
 
         // Reset all PCR data list
         void resetPCRDataList();

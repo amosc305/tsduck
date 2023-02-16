@@ -200,9 +200,9 @@ void ts::PcrComparator::comparePCR(InputDataVector& inputs)
 //----------------------------------------------------------------------------
 // Compare the times of two PCR data and check that they were retrieved at the same time interval
 //----------------------------------------------------------------------------
-bool ts::PcrComparator::verifyPCRDataInputTimestamp(uint64_t timestamp1, uint64_t timestamp2)
+bool ts::PcrComparator::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2)
 {
-    int64_t timestampThreshold = 5; // Threshold of the different between two timestamp (in millisecond)
+    double timestampThreshold = 10; // Threshold of the different between two timestamp (in millisecond)
     double timestampDiffInMs = (double) abs(timestamp1-timestamp2)/(90000*300)*1000;
     return timestampDiffInMs > timestampThreshold;
 }
