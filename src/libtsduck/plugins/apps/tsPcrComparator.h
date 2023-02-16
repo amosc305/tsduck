@@ -100,17 +100,35 @@ namespace ts {
         bool success() const { return _success; }
 
     private:
-        typedef std::vector<InputExecutor*> InputExecutorVector;
-        typedef std::vector<uint64_t> pcrData;
-        typedef std::list<pcrData> pcrDataList;
-        typedef std::vector<pcrDataList> pcrDataListVector;
+        struct InputData {
+            struct TimingData{
+                uint64_t pcr;
+                uint64_t timestamp;
+                TimingData(uint64_t _pcr, uint64_t _timestamp) : pcr(_pcr), timestamp(_timestamp) {}
+            };
+            
+            typedef std::list<TimingData> TimingDataList;
+
+            InputExecutor* inputExecutor;
+            TimingDataList timingDataList; // TODO: (amos) update name + put in struct
+            InputData(InputExecutor* _inputExecutor, TimingDataList _timingDataList) : inputExecutor(_inputExecutor), timingDataList(_timingDataList) {}
+
+            InputData(const InputData &other): inputExecutor(other.inputExecutor), timingDataList(other.timingDataList) {}
+
+            InputData &operator=(const InputData &other) {
+                inputExecutor = other.inputExecutor;
+                timingDataList = other.timingDataList;
+                return *this;
+            }
+        };
+
+        typedef std::vector<InputData> InputDataVector;
 
         Report&                    _report;
         PcrComparatorArgs          _args;
         volatile bool              _success;
-        InputExecutorVector        _inputs;           // Input plugins threads.
+        InputDataVector            _inputs;
         Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
-        pcrDataListVector          _pcrs;             // A vector of lists of PCR data, where each list of PCR data is associated with a particular input plugin.
         int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
         std::ofstream              _output_stream;    // Output stream file
         std::ostream*              _output_file;      // Reference to actual output stream file
@@ -119,10 +137,10 @@ namespace ts {
         void csvHeader();
 
         // Compare the different between two PCR data list
-        void comparePCR(pcrDataListVector& pcrs);
+        void comparePCR(InputDataVector& inputs);
 
         // Verify PCR data input timestamp
-        bool verifyPCRDataInputTimestamp(pcrData& data1, pcrData& data2);
+        bool verifyPCRDataInputTimestamp(uint64_t timestamp1, uint64_t timestamp2);
 
         // Reset all PCR data list
         void resetPCRDataList();

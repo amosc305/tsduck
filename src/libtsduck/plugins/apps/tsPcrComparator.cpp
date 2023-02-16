@@ -38,9 +38,8 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
     _report(report),
     _args(args),
     _success(false),
-    _inputs(args.inputs.size(), nullptr),
+    _inputs(),
     _mutex(),
-    _pcrs(),
     _latency_threshold(args.latencyThreshold),
     _output_stream(),
     _output_file(nullptr)
@@ -61,14 +60,13 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
     _report.resetErrors();
 
     // Get all input plugin options.
-    for (size_t i = 0; i < _inputs.size(); ++i) {
-        _inputs[i] = new InputExecutor(_args, i, *this, _report);
-        CheckNonNull(_inputs[i]);
-        // Set the asynchronous logger as report method for all executors.
-        _inputs[i]->setReport(&_report);
-        _inputs[i]->setMaxSeverity(_report.maxSeverity());
-        // Initialize the PCR vector
-        _pcrs.push_back({});
+    for (size_t i = 0; i < 2; ++i) {
+        // Path A: Without new
+        // InputExecutor inputExecutor(_args, i, *this, _report);
+        // InputData inputData(&inputExecutor, {});
+        // Path B: With new
+        InputData inputData(new InputExecutor(_args, i, *this, _report), {});
+        _inputs.push_back(inputData);
     }
 
     _success = start(args);
@@ -80,10 +78,8 @@ ts::PcrComparator::~PcrComparator()
     // Deallocate all input plugins.
     // The destructor of each plugin waits for its termination.
     for (size_t i = 0; i < _inputs.size(); ++i) {
-        delete _inputs[i];
+        delete _inputs[i].inputExecutor;
     }
-    _inputs.clear();
-    _pcrs.clear();
 }
 
 
@@ -95,7 +91,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
 {
     // Get all input plugin options.
     for (size_t i = 0; i < _inputs.size(); ++i) {
-        if (!_inputs[i]->plugin()->getOptions()) {
+        if (!_inputs[i].inputExecutor->plugin()->getOptions()) {
             return false;
         }
     }
@@ -118,7 +114,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
     // Start all input threads
     for (size_t i = 0; i < _inputs.size(); ++i) {
         // Here, start() means start the thread, and start input plugin.
-        _success = _inputs[i]->start();
+        _success = _inputs[i].inputExecutor->start();
     }
 
     return _success;
@@ -130,7 +126,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
 //----------------------------------------------------------------------------
 void ts::PcrComparator::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex)
 {
-    pcrDataList& pcrList = _pcrs.at(pluginIndex);
+    InputData::TimingDataList& timingDataList = _inputs[pluginIndex].timingDataList;
     for (size_t i = 0; i < count; i++)
     {
         GuardMutex lock(_mutex);
@@ -138,8 +134,9 @@ void ts::PcrComparator::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadat
         const bool has_pcr = pcr != INVALID_PCR;
         if (has_pcr) {
             uint64_t timestamp = metadata[i].getInputTimeStamp();
-            pcrList.push_back({pcr, timestamp});
-            comparePCR(_pcrs);
+            InputData::TimingData timingData(pcr, timestamp);
+            timingDataList.push_back(timingData);
+            comparePCR(_inputs);
         }
     }
 }
@@ -161,24 +158,24 @@ void ts::PcrComparator::csvHeader()
 //----------------------------------------------------------------------------
 // Compare different between two PCRs
 //----------------------------------------------------------------------------
-void ts::PcrComparator::comparePCR(pcrDataListVector& pcrs)
+void ts::PcrComparator::comparePCR(InputDataVector& inputs)
 {
-    if (pcrs.size() == 2) {
-        pcrDataList& pcrDataList1 = pcrs.at(0);
-        pcrDataList& pcrDataList2 = pcrs.at(1);
+    if (inputs.size() == 2) {
+        InputData::TimingDataList& timingDataList1 = inputs[0].timingDataList;
+        InputData::TimingDataList& timingDataList2 = inputs[1].timingDataList;
 
-        if (pcrDataList1.size() > 0 && pcrDataList2.size() > 0) {
-            pcrData pcrData1 = pcrDataList1.front();
-            pcrData pcrData2 = pcrDataList2.front();
+        if (timingDataList1.size() > 0 && timingDataList2.size() > 0) {
+            InputData::TimingData timingData1 = timingDataList1.front();
+            InputData::TimingData timingData2 = timingDataList2.front();
 
             // Make sure two PCR data are from the same time interval
-            bool pcrDataOutOfSync = verifyPCRDataInputTimestamp(pcrData1, pcrData2);
+            bool pcrDataOutOfSync = verifyPCRDataInputTimestamp(timingData1.timestamp, timingData2.timestamp);
 
             if (pcrDataOutOfSync) {
                 resetPCRDataList();
             } else {
-                int64_t pcr1 = pcrData1.at(0);
-                int64_t pcr2 = pcrData2.at(0);
+                int64_t pcr1 = timingData1.pcr;
+                int64_t pcr2 = timingData2.pcr;
                 int64_t pcrDelta = abs(pcr1 - pcr2);
                 double latency = (double) pcrDelta/(90000*300)*1000;
                 bool reachLatencyThreshold = pcrDelta >= 0 && latency <= _latency_threshold;
@@ -190,10 +187,10 @@ void ts::PcrComparator::comparePCR(pcrDataListVector& pcrs)
                             << std::boolalpha << reachLatencyThreshold 
                             << std::noboolalpha << std::endl;
 
-                pcrDataList1.pop_front();
-                pcrDataList2.pop_front();
+                timingDataList1.pop_front();
+                timingDataList2.pop_front();
             }
-        } else if (pcrDataList1.size() > 10 || pcrDataList2.size() > 10) {
+        } else if (timingDataList1.size() > 10 || timingDataList2.size() > 10) {
             // Avoid one of the list become too large during input lost
             resetPCRDataList();
         }
@@ -204,11 +201,9 @@ void ts::PcrComparator::comparePCR(pcrDataListVector& pcrs)
 //----------------------------------------------------------------------------
 // Compare the times of two PCR data and check that they were retrieved at the same time interval
 //----------------------------------------------------------------------------
-bool ts::PcrComparator::verifyPCRDataInputTimestamp(pcrData& data1, pcrData& data2)
+bool ts::PcrComparator::verifyPCRDataInputTimestamp(uint64_t timestamp1, uint64_t timestamp2)
 {
     int64_t timestampThreshold = 5; // Threshold of the different between two timestamp (in millisecond)
-    int64_t timestamp1 = data1.at(1);
-    int64_t timestamp2 = data2.at(1);
     double timestampDiffInMs = (double) abs(timestamp1-timestamp2)/(90000*300)*1000;
     return timestampDiffInMs > timestampThreshold;
 }
@@ -219,8 +214,8 @@ bool ts::PcrComparator::verifyPCRDataInputTimestamp(pcrData& data1, pcrData& dat
 //----------------------------------------------------------------------------
 void ts::PcrComparator::resetPCRDataList()
 {
-    for (size_t i = 0; i < _pcrs.size(); i++) {
-        _pcrs.at(i).clear();
+    for (size_t i = 0; i < _inputs.size(); i++) {
+        _inputs[i].timingDataList.clear();
     }
 }
 
@@ -232,6 +227,6 @@ void ts::PcrComparator::waitForTermination()
 {
     // Wait for all input termination.
     for (size_t i = 0; i < _inputs.size(); ++i) {
-        _inputs[i]->waitForTermination();
+        _inputs[i].inputExecutor->waitForTermination();
     }
 }
