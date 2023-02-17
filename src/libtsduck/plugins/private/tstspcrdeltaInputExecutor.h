@@ -34,7 +34,7 @@
 
 #pragma once
 #include "tsPluginThread.h"
-#include "tsPcrComparator.h"
+#include "tsLatencyMonitorCore.h"
 #include "tsPcrComparatorArgs.h"
 #include "tsInputPlugin.h"
 
@@ -57,7 +57,7 @@ namespace ts {
             //!
             InputExecutor(const PcrComparatorArgs &opt,
                           size_t index,
-                          PcrComparator &comparator,
+                          Core &comparator,
                           Report &log);
 
             //!
@@ -80,7 +80,7 @@ namespace ts {
             void terminateInput();
 
         private:
-            PcrComparator&           _comparator;  // Comparator instance
+            Core&           _comparator;  // Comparator instance
             InputPlugin*             _input;       // Plugin API.
             const size_t             _pluginIndex; // Index of this input plugin.
             const size_t             _pluginCount; // Count of total plugin

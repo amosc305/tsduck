@@ -41,7 +41,7 @@ constexpr size_t InputExecutor::BUFFERED_PACKETS;
 
 InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
                                     size_t index,
-                                    PcrComparator& comparator,
+                                    Core& comparator,
                                     Report& log) :
 
     // Input threads have a high priority to be always ready to load incoming packets in the buffer.

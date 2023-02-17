@@ -46,8 +46,8 @@ namespace ts {
         //! This class is used by the @a tspcrdelta utility.
         //! @ingroup plugin
         //!
-        class TSDUCKDLL PcrComparator {
-            TS_NOBUILD_NOCOPY(PcrComparator);
+        class TSDUCKDLL Core {
+            TS_NOBUILD_NOCOPY(Core);
         public:
             //!
             //! Constructor.
@@ -59,7 +59,7 @@ namespace ts {
             //! Consequently, it must be thread-safe. For performance reasons, it should
             //! be asynchronous (see for instance class AsyncReport).
             //!
-            PcrComparator(const PcrComparatorArgs& args, Report& report);
+            Core(const PcrComparatorArgs& args, Report& report);
 
             //!
             //! Start the PCR comparator session.

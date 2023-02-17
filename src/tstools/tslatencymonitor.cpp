@@ -41,7 +41,7 @@
 
 #include "tsMain.h"
 #include "tsArgsWithPlugins.h"
-#include "tsPcrComparator.h"
+#include "tsLatencyMonitorCore.h"
 #include "tsAsyncReport.h"
 
 TS_MAIN(MainCode);
@@ -98,7 +98,7 @@ int MainCode(int argc, char *argv[])
     ts::AsyncReport report(opt.maxSeverity(), opt.log_args);
 
     // The TS input processing is performed into this object.
-    ts::tslatencymonitor::PcrComparator comparator(opt.comparator_args, report);
+    ts::tslatencymonitor::Core core(opt.comparator_args, report);
 
-    return comparator.start() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return core.start() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
