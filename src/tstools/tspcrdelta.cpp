@@ -98,7 +98,7 @@ int MainCode(int argc, char *argv[])
     ts::AsyncReport report(opt.maxSeverity(), opt.log_args);
 
     // The TS input processing is performed into this object.
-    ts::PcrComparator comparator(opt.comparator_args, report);
+    ts::tslatencymonitor::PcrComparator comparator(opt.comparator_args, report);
 
     return comparator.start() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

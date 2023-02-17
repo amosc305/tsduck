@@ -40,77 +40,76 @@
 namespace ts {
     namespace tslatencymonitor {
         class InputExecutor;
-    }
-
-    //!
-    //! Implementation of the PCR comparator
-    //! This class is used by the @a tspcrdelta utility.
-    //! @ingroup plugin
-    //!
-    class TSDUCKDLL PcrComparator
-    {
-        TS_NOBUILD_NOCOPY(PcrComparator);
-    public:
-        //!
-        //! Constructor.
-        //! The complete input comparing session is performed in this constructor.
-        //! The constructor returns only when the PCR comparator session terminates or fails tp start.
-        //! @param [in] args Arguments and options.
-        //! @param [in,out] report Where to report errors, logs, etc.
-        //! This object will be used concurrently by all plugin execution threads.
-        //! Consequently, it must be thread-safe. For performance reasons, it should
-        //! be asynchronous (see for instance class AsyncReport).
-        //!
-        PcrComparator(const PcrComparatorArgs& args, Report& report);
 
         //!
-        //! Start the PCR comparator session.
-        //! @param [in] args Arguments and options.
-        //! @return True on success, false on failure to start.
+        //! Implementation of the PCR comparator
+        //! This class is used by the @a tspcrdelta utility.
+        //! @ingroup plugin
         //!
-        bool start();
+        class TSDUCKDLL PcrComparator {
+            TS_NOBUILD_NOCOPY(PcrComparator);
+        public:
+            //!
+            //! Constructor.
+            //! The complete input comparing session is performed in this constructor.
+            //! The constructor returns only when the PCR comparator session terminates or fails tp start.
+            //! @param [in] args Arguments and options.
+            //! @param [in,out] report Where to report errors, logs, etc.
+            //! This object will be used concurrently by all plugin execution threads.
+            //! Consequently, it must be thread-safe. For performance reasons, it should
+            //! be asynchronous (see for instance class AsyncReport).
+            //!
+            PcrComparator(const PcrComparatorArgs& args, Report& report);
 
-        //!
-        //! Called by an input plugin when it received input packets.
-        //! @param [in] pkt Income TS packet.
-        //! @param [in] count TS packet count.
-        //! @param [in] pluginIndex Index of the input plugin.
-        //!
-        void analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex);
+            //!
+            //! Start the PCR comparator session.
+            //! @param [in] args Arguments and options.
+            //! @return True on success, false on failure to start.
+            //!
+            bool start();
 
-    private:
-        struct InputData {
-            struct TimingData{
-                uint64_t pcr;
-                uint64_t timestamp;
+            //!
+            //! Called by an input plugin when it received input packets.
+            //! @param [in] pkt Income TS packet.
+            //! @param [in] count TS packet count.
+            //! @param [in] pluginIndex Index of the input plugin.
+            //!
+            void analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex);
+
+        private:
+            struct InputData {
+                struct TimingData{
+                    uint64_t pcr;
+                    uint64_t timestamp;
+                };
+                
+                typedef std::list<TimingData> TimingDataList;
+
+                std::shared_ptr<tslatencymonitor::InputExecutor> inputExecutor;
+                TimingDataList timingDataList;
             };
-            
-            typedef std::list<TimingData> TimingDataList;
 
-            std::shared_ptr<tslatencymonitor::InputExecutor> inputExecutor;
-            TimingDataList timingDataList;
+            typedef std::vector<InputData> InputDataVector;
+
+            Report&                    _report;
+            PcrComparatorArgs          _args;
+            InputDataVector            _inputs;
+            Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
+            int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
+            std::ofstream              _output_stream;    // Output stream file
+            std::ostream*              _output_file;      // Reference to actual output stream file
+
+            // Generate csv header
+            void csvHeader();
+
+            // Compare the different between two PCR data list
+            void comparePCR(InputDataVector& inputs);
+
+            // Verify PCR data input timestamp
+            bool verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2);
+
+            // Reset all PCR data list
+            void resetPCRDataList();
         };
-
-        typedef std::vector<InputData> InputDataVector;
-
-        Report&                    _report;
-        PcrComparatorArgs          _args;
-        InputDataVector            _inputs;
-        Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
-        int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
-        std::ofstream              _output_stream;    // Output stream file
-        std::ostream*              _output_file;      // Reference to actual output stream file
-
-        // Generate csv header
-        void csvHeader();
-
-        // Compare the different between two PCR data list
-        void comparePCR(InputDataVector& inputs);
-
-        // Verify PCR data input timestamp
-        bool verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2);
-
-        // Reset all PCR data list
-        void resetPCRDataList();
-    };
+    }
 }

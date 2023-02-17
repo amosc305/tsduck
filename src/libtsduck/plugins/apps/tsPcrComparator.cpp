@@ -30,11 +30,13 @@
 #include "tsPcrComparator.h"
 #include "tstspcrdeltaInputExecutor.h"
 
+using namespace ts::tslatencymonitor;
+
 //----------------------------------------------------------------------------
 // Constructors and destructor.
 //----------------------------------------------------------------------------
 
-ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) :
+PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) :
     _report(report),
     _args(args),
     _inputs(),
@@ -69,7 +71,7 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
 // Start the PCR comparator session.
 //----------------------------------------------------------------------------
 
-bool ts::PcrComparator::start()
+bool PcrComparator::start()
 {
     // Get all input plugin options.
     for (size_t i = 0; i < _inputs.size(); ++i) {
@@ -113,7 +115,7 @@ bool ts::PcrComparator::start()
 //----------------------------------------------------------------------------
 // Pass incoming TS packets for analyzing (called by input plugins).
 //----------------------------------------------------------------------------
-void ts::PcrComparator::analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex)
+void PcrComparator::analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex)
 {
     InputData::TimingDataList& timingDataList = _inputs[pluginIndex].timingDataList;
     for (size_t i = 0; i < count; i++)
@@ -133,7 +135,7 @@ void ts::PcrComparator::analyzePacket(const TSPacketVector& pkt, const TSPacketM
 //----------------------------------------------------------------------------
 // Generate csv header
 //----------------------------------------------------------------------------
-void ts::PcrComparator::csvHeader()
+void PcrComparator::csvHeader()
 {
     *_output_file << "PCR1" << TS_DEFAULT_CSV_SEPARATOR
                     << "PCR2" << TS_DEFAULT_CSV_SEPARATOR
@@ -146,7 +148,7 @@ void ts::PcrComparator::csvHeader()
 //----------------------------------------------------------------------------
 // Compare different between two PCRs
 //----------------------------------------------------------------------------
-void ts::PcrComparator::comparePCR(InputDataVector& inputs)
+void PcrComparator::comparePCR(InputDataVector& inputs)
 {
     if (inputs.size() == 2) {
         InputData::TimingDataList& timingDataList1 = inputs[0].timingDataList;
@@ -189,7 +191,7 @@ void ts::PcrComparator::comparePCR(InputDataVector& inputs)
 //----------------------------------------------------------------------------
 // Compare the times of two PCR data and check that they were retrieved at the same time interval
 //----------------------------------------------------------------------------
-bool ts::PcrComparator::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2)
+bool PcrComparator::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2)
 {
     double timestampThreshold = 10; // Threshold of the different between two timestamp (in millisecond)
     double timestampDiffInMs = (double) abs(timestamp1-timestamp2)/(90000*300)*1000;
@@ -200,7 +202,7 @@ bool ts::PcrComparator::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t 
 //----------------------------------------------------------------------------
 // Reset all PCR data list
 //----------------------------------------------------------------------------
-void ts::PcrComparator::resetPCRDataList()
+void PcrComparator::resetPCRDataList()
 {
     for (size_t i = 0; i < _inputs.size(); i++) {
         _inputs[i].timingDataList.clear();
