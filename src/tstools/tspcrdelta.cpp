@@ -99,5 +99,5 @@ int MainCode(int argc, char *argv[])
     // The TS input processing is performed into this object.
     ts::PcrComparator comparator(opt.comparator_args, report);
 
-    return comparator.success() ? EXIT_SUCCESS : EXIT_FAILURE;
+    return comparator.start() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

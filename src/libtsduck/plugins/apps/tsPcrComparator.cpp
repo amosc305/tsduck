@@ -37,7 +37,6 @@
 ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) :
     _report(report),
     _args(args),
-    _success(false),
     _inputs(),
     _mutex(),
     _latency_threshold(args.latencyThreshold),
@@ -63,9 +62,6 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
         auto inputExecutor = std::make_shared<InputExecutor>(_args, i, *this, _report);
         _inputs.push_back(InputData{inputExecutor, {}});
     }
-
-    _success = start(args);
-    waitForTermination();
 }
 
 
@@ -73,7 +69,7 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
 // Start the PCR comparator session.
 //----------------------------------------------------------------------------
 
-bool ts::PcrComparator::start(const PcrComparatorArgs& args)
+bool ts::PcrComparator::start()
 {
     // Get all input plugin options.
     for (size_t i = 0; i < _inputs.size(); ++i) {
@@ -100,10 +96,17 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
     // Start all input threads
     for (size_t i = 0; i < _inputs.size(); ++i) {
         // Here, start() means start the thread, and start input plugin.
-        _success = _inputs[i].inputExecutor->start();
+        bool success = _inputs[i].inputExecutor->start();
+        if (!success) {
+            return false;
+        }
     }
 
-    return _success;
+    for (size_t i = 0; i < _inputs.size(); ++i) {
+        _inputs[i].inputExecutor->waitForTermination();
+    }
+
+    return true;
 }
 
 
@@ -201,17 +204,5 @@ void ts::PcrComparator::resetPCRDataList()
 {
     for (size_t i = 0; i < _inputs.size(); i++) {
         _inputs[i].timingDataList.clear();
-    }
-}
-
-
-//----------------------------------------------------------------------------
-// Suspend the calling thread until PCR comparator is completed.
-//----------------------------------------------------------------------------
-void ts::PcrComparator::waitForTermination()
-{
-    // Wait for all input termination.
-    for (size_t i = 0; i < _inputs.size(); ++i) {
-        _inputs[i].inputExecutor->waitForTermination();
     }
 }

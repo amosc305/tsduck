@@ -67,12 +67,7 @@ namespace ts {
         //! @param [in] args Arguments and options.
         //! @return True on success, false on failure to start.
         //!
-        bool start(const PcrComparatorArgs& args);
-
-        //!
-        //! Suspend the calling thread until PCR comparator is completed.
-        //!
-        void waitForTermination();
+        bool start();
 
         //!
         //! Called by an input plugin when it received input packets.
@@ -81,12 +76,6 @@ namespace ts {
         //! @param [in] pluginIndex Index of the input plugin.
         //!
         void analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex);
-
-        //!
-        //! Check if the session, when completely run in the constructor, was successful.
-        //! @return True on success, false on failure to start.
-        //!
-        bool success() const { return _success; }
 
     private:
         struct InputData {
@@ -105,7 +94,6 @@ namespace ts {
 
         Report&                    _report;
         PcrComparatorArgs          _args;
-        volatile bool              _success;
         InputDataVector            _inputs;
         Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
         int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
