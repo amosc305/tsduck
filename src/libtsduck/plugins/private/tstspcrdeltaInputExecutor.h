@@ -39,57 +39,58 @@
 #include "tsInputPlugin.h"
 
 namespace ts {
-    //!
-    //! Execution context of a tspcrdelta input plugin.
-    //! @ingroup plugin
-    //!
-    class InputExecutor : public PluginThread
-    {
-        TS_NOBUILD_NOCOPY(InputExecutor);
-
-    public:
+    namespace tslatencymonitor {
         //!
-        //! Constructor.
-        //! @param [in] opt Command line options.
-        //! @param [in] index Input plugin index.
-        //! @param [in,out] comparator Comparator instance
-        //! @param [in,out] log Log report.
+        //! Execution context of a tspcrdelta input plugin.
+        //! @ingroup plugin
         //!
-        InputExecutor(const PcrComparatorArgs &opt,
-                      size_t index,
-                      PcrComparator &comparator,
-                      Report &log);
+        class InputExecutor : public PluginThread {
+            TS_NOBUILD_NOCOPY(InputExecutor);
 
-        //!
-        //! Virtual destructor.
-        //!
-        ~InputExecutor() override;
+        public:
+            //!
+            //! Constructor.
+            //! @param [in] opt Command line options.
+            //! @param [in] index Input plugin index.
+            //! @param [in,out] comparator Comparator instance
+            //! @param [in,out] log Log report.
+            //!
+            InputExecutor(const PcrComparatorArgs &opt,
+                          size_t index,
+                          PcrComparator &comparator,
+                          Report &log);
 
-        // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
-        void useJointTermination(bool) override;
-        void jointTerminate() override;
-        bool useJointTermination() const override;
-        bool thisJointTerminated() const override;
-        size_t pluginCount() const override;
-        void signalPluginEvent(uint32_t event_code, Object *plugin_data = nullptr) const override;
-        size_t pluginIndex() const override;
+            //!
+            //! Virtual destructor.
+            //!
+            ~InputExecutor() override;
 
-        //!
-        //! Terminate the input executor thread.
-        //!
-        void terminateInput();
+            // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
+            void useJointTermination(bool) override;
+            void jointTerminate() override;
+            bool useJointTermination() const override;
+            bool thisJointTerminated() const override;
+            size_t pluginCount() const override;
+            void signalPluginEvent(uint32_t event_code, Object *plugin_data = nullptr) const override;
+            size_t pluginIndex() const override;
 
-    private:
-        PcrComparator&           _comparator;  // Comparator instance
-        InputPlugin*             _input;       // Plugin API.
-        const size_t             _pluginIndex; // Index of this input plugin.
-        const size_t             _pluginCount; // Count of total plugin
-        TSPacketVector           _buffer;      // Packet buffer.
-        TSPacketMetadataVector   _metadata;    // Packet metadata.
+            //!
+            //! Terminate the input executor thread.
+            //!
+            void terminateInput();
 
-        static constexpr size_t      BUFFERED_PACKETS = 512;   // Input size buffer in packets.
+        private:
+            PcrComparator&           _comparator;  // Comparator instance
+            InputPlugin*             _input;       // Plugin API.
+            const size_t             _pluginIndex; // Index of this input plugin.
+            const size_t             _pluginCount; // Count of total plugin
+            TSPacketVector           _buffer;      // Packet buffer.
+            TSPacketMetadataVector   _metadata;    // Packet metadata.
 
-        // Implementation of Thread.
-        void main() override;
-    };
+            static constexpr size_t BUFFERED_PACKETS = 512; // Input size buffer in packets.
+
+            // Implementation of Thread.
+            void main() override;
+        };
+    }
 }

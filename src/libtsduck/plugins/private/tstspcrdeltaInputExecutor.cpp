@@ -29,15 +29,17 @@
 
 #include "tstspcrdeltaInputExecutor.h"
 
+using namespace ts::tslatencymonitor;
+
 #if defined(TS_NEED_STATIC_CONST_DEFINITIONS)
-constexpr size_t ts::InputExecutor::BUFFERED_PACKETS;
+constexpr size_t InputExecutor::BUFFERED_PACKETS;
 #endif
 
 //----------------------------------------------------------------------------
 // Constructor and destructor.
 //----------------------------------------------------------------------------
 
-ts::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
+InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
                                     size_t index,
                                     PcrComparator& comparator,
                                     Report& log) :
@@ -55,7 +57,7 @@ ts::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
     setLogName(UString::Format(u"%s[%d]", {pluginName(), _pluginIndex}));
 }
 
-ts::InputExecutor::~InputExecutor()
+InputExecutor::~InputExecutor()
 {
     waitForTermination();
 }
@@ -65,34 +67,34 @@ ts::InputExecutor::~InputExecutor()
 // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
 //----------------------------------------------------------------------------
 
-void ts::InputExecutor::useJointTermination(bool)
+void InputExecutor::useJointTermination(bool)
 {
 }
 
-void ts::InputExecutor::jointTerminate()
+void InputExecutor::jointTerminate()
 {
 }
 
-bool ts::InputExecutor::useJointTermination() const
-{
-    return false;
-}
-
-bool ts::InputExecutor::thisJointTerminated() const
+bool InputExecutor::useJointTermination() const
 {
     return false;
 }
 
-size_t ts::InputExecutor::pluginCount() const
+bool InputExecutor::thisJointTerminated() const
+{
+    return false;
+}
+
+size_t InputExecutor::pluginCount() const
 {
     return _pluginCount;
 }
 
-void ts::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
+void InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
 {
 }
 
-size_t ts::InputExecutor::pluginIndex() const
+size_t InputExecutor::pluginIndex() const
 {
     return _pluginIndex;
 }
@@ -102,7 +104,7 @@ size_t ts::InputExecutor::pluginIndex() const
 // Invoked in the context of the plugin thread.
 //----------------------------------------------------------------------------
 
-void ts::InputExecutor::main()
+void InputExecutor::main()
 {
     debug(u"input thread started");
 

@@ -38,8 +38,9 @@
 #include <memory>
 
 namespace ts {
-
-    class InputExecutor;
+    namespace tslatencymonitor {
+        class InputExecutor;
+    }
 
     //!
     //! Implementation of the PCR comparator
@@ -86,7 +87,7 @@ namespace ts {
             
             typedef std::list<TimingData> TimingDataList;
 
-            std::shared_ptr<InputExecutor> inputExecutor;
+            std::shared_ptr<tslatencymonitor::InputExecutor> inputExecutor;
             TimingDataList timingDataList;
         };
 
