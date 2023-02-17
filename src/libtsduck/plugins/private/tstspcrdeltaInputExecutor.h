@@ -80,10 +80,10 @@ namespace ts {
         void terminateInput();
 
     private:
-        const PcrComparatorArgs& _opt;         //!< Command line options.
         PcrComparator&           _comparator;  // Comparator instance
         InputPlugin*             _input;       // Plugin API.
         const size_t             _pluginIndex; // Index of this input plugin.
+        const size_t             _pluginCount; // Count of total plugin
         TSPacketVector           _buffer;      // Packet buffer.
         TSPacketMetadataVector   _metadata;    // Packet metadata.
 

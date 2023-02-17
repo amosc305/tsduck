@@ -44,10 +44,10 @@ ts::InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
 
     // Input threads have a high priority to be always ready to load incoming packets in the buffer.
     PluginThread(&log, opt.appName, PluginType::INPUT, opt.inputs[index], ThreadAttributes().setPriority(ThreadAttributes::GetHighPriority())),
-    _opt(opt),
     _comparator(comparator),
     _input(dynamic_cast<InputPlugin*>(PluginThread::plugin())),
     _pluginIndex(index),
+    _pluginCount(opt.inputs.size()),
     _buffer(BUFFERED_PACKETS),
     _metadata(BUFFERED_PACKETS)
 {
@@ -85,7 +85,7 @@ bool ts::InputExecutor::thisJointTerminated() const
 
 size_t ts::InputExecutor::pluginCount() const
 {
-    return _opt.inputs.size();
+    return _pluginCount;
 }
 
 void ts::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
