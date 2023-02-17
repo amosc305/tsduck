@@ -30,7 +30,6 @@
 #include "tstspcrdeltaInputExecutor.h"
 
 #if defined(TS_NEED_STATIC_CONST_DEFINITIONS)
-constexpr size_t ts::InputExecutor::MAX_INPUT_PACKETS;
 constexpr size_t ts::InputExecutor::BUFFERED_PACKETS;
 #endif
 
@@ -117,23 +116,17 @@ void ts::InputExecutor::main()
         // Loop on incoming packets.
         for (;;) {
             // Input area (first packet index and packet count).
-            size_t inFirst = 0;
-            size_t inCount = MAX_INPUT_PACKETS;
-
-            // Assertion failure if inFirst + inCount larger than buffer size
-            assert(inFirst + inCount <= _buffer.size());
+            size_t count;
 
             // Receive packets.
-            if ((inCount = _input->receive(&_buffer[inFirst], &_metadata[inFirst], inCount)) == 0) {
+            if ((count = _input->receive(&_buffer[0], &_metadata[0], BUFFERED_PACKETS)) == 0) {
                 // End of input.
                 debug(u"received end of input from plugin");
                 break;
             }
 
             // Pass packet to comparator for analyzing
-            TSPacket* pkt = &_buffer[inFirst];
-            TSPacketMetadata* metadata = &_metadata[inFirst];
-            _comparator.analyzePacket(pkt, metadata, inCount, _pluginIndex);
+            _comparator.analyzePacket(_buffer, _metadata, count, _pluginIndex);
         }
     }
 }

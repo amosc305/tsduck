@@ -110,7 +110,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
 //----------------------------------------------------------------------------
 // Pass incoming TS packets for analyzing (called by input plugins).
 //----------------------------------------------------------------------------
-void ts::PcrComparator::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex)
+void ts::PcrComparator::analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex)
 {
     InputData::TimingDataList& timingDataList = _inputs[pluginIndex].timingDataList;
     for (size_t i = 0; i < count; i++)

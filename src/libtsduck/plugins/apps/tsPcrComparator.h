@@ -63,12 +63,6 @@ namespace ts {
         PcrComparator(const PcrComparatorArgs& args, Report& report);
 
         //!
-        //! Get a reference to the report object for the PCR comparator.
-        //! @return A reference to the report object for the PCR comparator.
-        //!
-        Report& report() const { return _report; }
-
-        //!
         //! Start the PCR comparator session.
         //! @param [in] args Arguments and options.
         //! @return True on success, false on failure to start.
@@ -86,7 +80,7 @@ namespace ts {
         //! @param [in] count TS packet count.
         //! @param [in] pluginIndex Index of the input plugin.
         //!
-        void analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadata, size_t count, size_t pluginIndex);
+        void analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex);
 
         //!
         //! Check if the session, when completely run in the constructor, was successful.
