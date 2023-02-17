@@ -59,7 +59,7 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
     _report.resetErrors();
 
     // Get all input plugin options.
-    for (size_t i = 0; i < 2; ++i) {
+    for (size_t i = 0; i < _args.inputs.size(); ++i) {
         auto inputExecutor = std::make_shared<InputExecutor>(_args, i, *this, _report);
         _inputs.push_back(InputData{inputExecutor, {}});
     }
