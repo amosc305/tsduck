@@ -43,7 +43,7 @@ namespace ts {
     //! Transport stream PCR comparator command-line options
     //! @ingroup plugin
     //!
-    class TSDUCKDLL PcrComparatorArgs
+    class TSDUCKDLL LantencyMonitorArgs
     {
     public:
         UString             appName;           //!< Application name, for help messages.
@@ -54,7 +54,7 @@ namespace ts {
         //!
         //! Constructor.
         //!
-        PcrComparatorArgs();
+        LantencyMonitorArgs();
 
         //!
         //! Add command line option definitions in an Args.

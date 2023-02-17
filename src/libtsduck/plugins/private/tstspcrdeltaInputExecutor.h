@@ -35,7 +35,7 @@
 #pragma once
 #include "tsPluginThread.h"
 #include "tsLatencyMonitorCore.h"
-#include "tsPcrComparatorArgs.h"
+#include "tsLatencyMonitorArgs.h"
 #include "tsInputPlugin.h"
 
 namespace ts {
@@ -55,7 +55,7 @@ namespace ts {
             //! @param [in,out] comparator Comparator instance
             //! @param [in,out] log Log report.
             //!
-            InputExecutor(const PcrComparatorArgs &opt,
+            InputExecutor(const LantencyMonitorArgs &opt,
                           size_t index,
                           Core &comparator,
                           Report &log);

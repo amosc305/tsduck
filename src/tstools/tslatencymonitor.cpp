@@ -60,7 +60,7 @@ namespace {
 
         ts::DuckContext       duck;            // TSDuck context
         ts::AsyncReportArgs   log_args;        // Asynchronous logger arguments.
-        ts::PcrComparatorArgs comparator_args; // TS processing arguments.
+        ts::LantencyMonitorArgs comparator_args; // TS processing arguments.
     };
 }
 

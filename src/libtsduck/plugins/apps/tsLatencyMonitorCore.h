@@ -33,7 +33,7 @@
 //----------------------------------------------------------------------------
 
 #pragma once
-#include "tsPcrComparatorArgs.h"
+#include "tsLatencyMonitorArgs.h"
 #include "tsMutex.h"
 #include <memory>
 
@@ -59,7 +59,7 @@ namespace ts {
             //! Consequently, it must be thread-safe. For performance reasons, it should
             //! be asynchronous (see for instance class AsyncReport).
             //!
-            Core(const PcrComparatorArgs& args, Report& report);
+            Core(const LantencyMonitorArgs& args, Report& report);
 
             //!
             //! Start the PCR comparator session.
@@ -92,7 +92,7 @@ namespace ts {
             typedef std::vector<InputData> InputDataVector;
 
             Report&                    _report;
-            PcrComparatorArgs          _args;
+            LantencyMonitorArgs          _args;
             InputDataVector            _inputs;
             Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
             int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).

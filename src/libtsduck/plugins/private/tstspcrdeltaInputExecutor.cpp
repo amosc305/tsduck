@@ -39,7 +39,7 @@ constexpr size_t InputExecutor::BUFFERED_PACKETS;
 // Constructor and destructor.
 //----------------------------------------------------------------------------
 
-InputExecutor::InputExecutor(const PcrComparatorArgs& opt,
+InputExecutor::InputExecutor(const LantencyMonitorArgs& opt,
                                     size_t index,
                                     Core& comparator,
                                     Report& log) :

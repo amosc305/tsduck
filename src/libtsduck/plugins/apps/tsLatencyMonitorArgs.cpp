@@ -27,14 +27,14 @@
 //
 //----------------------------------------------------------------------------
 
-#include "tsPcrComparatorArgs.h"
+#include "tsLatencyMonitorArgs.h"
 #include "tsArgsWithPlugins.h"
 
 //----------------------------------------------------------------------------
 // Constructors.
 //----------------------------------------------------------------------------
 
-ts::PcrComparatorArgs::PcrComparatorArgs() :
+ts::LantencyMonitorArgs::LantencyMonitorArgs() :
     appName(),
     inputs(),
     outputName(),
@@ -47,7 +47,7 @@ ts::PcrComparatorArgs::PcrComparatorArgs() :
 // Define command line options in an Args.
 //----------------------------------------------------------------------------
 
-void ts::PcrComparatorArgs::defineArgs(Args& args)
+void ts::LantencyMonitorArgs::defineArgs(Args& args)
 {
     args.option(u"output-file", 'o', Args::FILENAME);
     args.help(u"output-file", u"filename",
@@ -64,7 +64,7 @@ void ts::PcrComparatorArgs::defineArgs(Args& args)
 // Load arguments from command line.
 //----------------------------------------------------------------------------
 
-bool ts::PcrComparatorArgs::loadArgs(Args& args)
+bool ts::LantencyMonitorArgs::loadArgs(Args& args)
 {
     appName = args.appName();
     outputName = args.value(u"output-file");

@@ -36,7 +36,7 @@ using namespace ts::tslatencymonitor;
 // Constructors and destructor.
 //----------------------------------------------------------------------------
 
-Core::Core(const PcrComparatorArgs& args, Report& report) :
+Core::Core(const LantencyMonitorArgs& args, Report& report) :
     _report(report),
     _args(args),
     _inputs(),
