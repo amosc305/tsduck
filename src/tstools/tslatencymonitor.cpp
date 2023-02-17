@@ -65,7 +65,7 @@ namespace {
 }
 
 Options::Options(int argc, char *argv[]) :
-    ts::ArgsWithPlugins(2, 2, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[tspcrdelta-options]"),
+    ts::ArgsWithPlugins(2, 2, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[Options]"),
     duck(this),
     log_args(),
     comparator_args()
