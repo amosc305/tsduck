@@ -60,25 +60,12 @@ ts::PcrComparator::PcrComparator(const PcrComparatorArgs& args, Report& report) 
 
     // Get all input plugin options.
     for (size_t i = 0; i < 2; ++i) {
-        // Path A: Without new
-        // InputExecutor inputExecutor(_args, i, *this, _report);
-        // InputData inputData(&inputExecutor, {});
-        // Path B: With new
-        InputData inputData(new InputExecutor(_args, i, *this, _report), {});
-        _inputs.push_back(inputData);
+        auto inputExecutor = std::make_shared<InputExecutor>(_args, i, *this, _report);
+        _inputs.push_back(InputData{inputExecutor, {}});
     }
 
     _success = start(args);
     waitForTermination();
-}
-
-ts::PcrComparator::~PcrComparator()
-{
-    // Deallocate all input plugins.
-    // The destructor of each plugin waits for its termination.
-    for (size_t i = 0; i < _inputs.size(); ++i) {
-        delete _inputs[i].inputExecutor;
-    }
 }
 
 
@@ -90,7 +77,7 @@ bool ts::PcrComparator::start(const PcrComparatorArgs& args)
 {
     // Get all input plugin options.
     for (size_t i = 0; i < _inputs.size(); ++i) {
-        if (!_inputs[i].inputExecutor->plugin()->getOptions()) {
+        if (!_inputs[i].inputExecutor -> plugin()->getOptions()) {
             return false;
         }
     }
@@ -133,8 +120,7 @@ void ts::PcrComparator::analyzePacket(TSPacket*& pkt, TSPacketMetadata*& metadat
         const bool has_pcr = pcr != INVALID_PCR;
         if (has_pcr) {
             uint64_t timestamp = metadata[i].getInputTimeStamp();
-            InputData::TimingData timingData(pcr, timestamp);
-            timingDataList.push_back(timingData);
+            timingDataList.push_back(InputData::TimingData{pcr, timestamp});
             comparePCR(_inputs);
         }
     }

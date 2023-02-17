@@ -35,6 +35,7 @@
 #pragma once
 #include "tsPcrComparatorArgs.h"
 #include "tsMutex.h"
+#include <memory>
 
 namespace ts {
 
@@ -60,12 +61,6 @@ namespace ts {
         //! be asynchronous (see for instance class AsyncReport).
         //!
         PcrComparator(const PcrComparatorArgs& args, Report& report);
-
-        //!
-        //! Destructor.
-        //! It waits for termination of the session if it is running.
-        //!
-        ~PcrComparator();
 
         //!
         //! Get a reference to the report object for the PCR comparator.
@@ -104,22 +99,12 @@ namespace ts {
             struct TimingData{
                 uint64_t pcr;
                 uint64_t timestamp;
-                TimingData(uint64_t _pcr, uint64_t _timestamp) : pcr(_pcr), timestamp(_timestamp) {}
             };
             
             typedef std::list<TimingData> TimingDataList;
 
-            InputExecutor* inputExecutor;
-            TimingDataList timingDataList; // TODO: (amos) update name + put in struct
-            InputData(InputExecutor* _inputExecutor, TimingDataList _timingDataList) : inputExecutor(_inputExecutor), timingDataList(_timingDataList) {}
-
-            InputData(const InputData &other): inputExecutor(other.inputExecutor), timingDataList(other.timingDataList) {}
-
-            InputData &operator=(const InputData &other) {
-                inputExecutor = other.inputExecutor;
-                timingDataList = other.timingDataList;
-                return *this;
-            }
+            std::shared_ptr<InputExecutor> inputExecutor;
+            TimingDataList timingDataList;
         };
 
         typedef std::vector<InputData> InputDataVector;

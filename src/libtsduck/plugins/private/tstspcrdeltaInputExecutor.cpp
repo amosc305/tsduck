@@ -28,7 +28,6 @@
 //----------------------------------------------------------------------------
 
 #include "tstspcrdeltaInputExecutor.h"
-#include "tsPcrComparator.h"
 
 #if defined(TS_NEED_STATIC_CONST_DEFINITIONS)
 constexpr size_t ts::InputExecutor::MAX_INPUT_PACKETS;
