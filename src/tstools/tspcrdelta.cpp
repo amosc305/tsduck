@@ -43,6 +43,7 @@
 #include "tsArgsWithPlugins.h"
 #include "tsPcrComparator.h"
 #include "tsAsyncReport.h"
+
 TS_MAIN(MainCode);
 
 
@@ -51,11 +52,11 @@ TS_MAIN(MainCode);
 //----------------------------------------------------------------------------
 
 namespace {
-    class TSPcrDeltaOptions: public ts::ArgsWithPlugins
+    class Options: public ts::ArgsWithPlugins
     {
-        TS_NOBUILD_NOCOPY(TSPcrDeltaOptions);
+        TS_NOBUILD_NOCOPY(Options);
     public:
-        TSPcrDeltaOptions(int argc, char *argv[]);
+        Options(int argc, char *argv[]);
 
         ts::DuckContext       duck;            // TSDuck context
         ts::AsyncReportArgs   log_args;        // Asynchronous logger arguments.
@@ -63,7 +64,7 @@ namespace {
     };
 }
 
-TSPcrDeltaOptions::TSPcrDeltaOptions(int argc, char *argv[]) :
+Options::Options(int argc, char *argv[]) :
     ts::ArgsWithPlugins(2, 2, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[tspcrdelta-options]"),
     duck(this),
     log_args(),
@@ -91,7 +92,7 @@ TSPcrDeltaOptions::TSPcrDeltaOptions(int argc, char *argv[]) :
 int MainCode(int argc, char *argv[])
 {
     // Get command line options.
-    TSPcrDeltaOptions opt(argc, argv);
+    Options opt(argc, argv);
 
     // Create and start an asynchronous log (separate thread).
     ts::AsyncReport report(opt.maxSeverity(), opt.log_args);

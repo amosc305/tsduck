@@ -63,16 +63,16 @@ namespace ts {
         //!
         //! Virtual destructor.
         //!
-        virtual ~InputExecutor() override;
+        ~InputExecutor() override;
 
         // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
-        virtual void useJointTermination(bool) override;
-        virtual void jointTerminate() override;
-        virtual bool useJointTermination() const override;
-        virtual bool thisJointTerminated() const override;
-        virtual size_t pluginCount() const override;
-        virtual void signalPluginEvent(uint32_t event_code, Object *plugin_data = nullptr) const override;
-        virtual size_t pluginIndex() const override;
+        void useJointTermination(bool) override;
+        void jointTerminate() override;
+        bool useJointTermination() const override;
+        bool thisJointTerminated() const override;
+        size_t pluginCount() const override;
+        void signalPluginEvent(uint32_t event_code, Object *plugin_data = nullptr) const override;
+        size_t pluginIndex() const override;
 
         //!
         //! Terminate the input executor thread.
@@ -90,6 +90,6 @@ namespace ts {
         static constexpr size_t      BUFFERED_PACKETS = 512;   // Input size buffer in packets.
 
         // Implementation of Thread.
-        virtual void main() override;
+        void main() override;
     };
 }
