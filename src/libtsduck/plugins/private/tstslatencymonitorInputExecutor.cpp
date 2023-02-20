@@ -27,7 +27,7 @@
 //
 //----------------------------------------------------------------------------
 
-#include "tstspcrdeltaInputExecutor.h"
+#include "tstslatencymonitorInputExecutor.h"
 
 using namespace ts::tslatencymonitor;
 
