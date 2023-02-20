@@ -46,7 +46,7 @@ tslatencymonitor::InputExecutor::InputExecutor(const LantencyMonitorArgs& opt,
 
     // Input threads have a high priority to be always ready to load incoming packets in the buffer.
     PluginThread(&log, opt.appName, PluginType::INPUT, opt.inputs[index], ThreadAttributes().setPriority(ThreadAttributes::GetHighPriority())),
-    _comparator(comparator),
+    _monitor(comparator),
     _input(dynamic_cast<InputPlugin*>(PluginThread::plugin())),
     _pluginIndex(index),
     _pluginCount(opt.inputs.size()),
@@ -64,7 +64,7 @@ tslatencymonitor::InputExecutor::~InputExecutor()
 
 
 //----------------------------------------------------------------------------
-// Implementation of TSP. We do not use "joint termination" in tspcrdelta.
+// Implementation of TSP. We do not use "joint termination" in tslatencymonitor.
 //----------------------------------------------------------------------------
 
 void tslatencymonitor::InputExecutor::useJointTermination(bool)
@@ -127,8 +127,8 @@ void tslatencymonitor::InputExecutor::main()
                 break;
             }
 
-            // Pass packet to comparator for analyzing
-            _comparator.analyzePacket(_buffer, _metadata, count, _pluginIndex);
+            // Pass packet to monitor for analyzing
+            _monitor.analyzePacket(_buffer, _metadata, count, _pluginIndex);
         }
     }
 }

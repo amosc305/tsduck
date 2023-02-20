@@ -28,7 +28,7 @@
 //----------------------------------------------------------------------------
 //!
 //!  @file
-//!  Transport stream PCR comparator command-line options
+//!  Transport stream latency monitor command-line options
 //!
 //----------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ namespace ts {
     class Args;
 
     //!
-    //! Transport stream PCR comparator command-line options
+    //! Transport stream latency monitor command-line options
     //! @ingroup plugin
     //!
     class TSDUCKDLL LantencyMonitorArgs
@@ -48,8 +48,8 @@ namespace ts {
     public:
         UString             appName;           //!< Application name, for help messages.
         PluginOptionsVector inputs;            //!< Input plugins descriptions.
-        UString             outputName;       //!< Output file name (empty means stderr).
-        int64_t             latencyThreshold; //!< Latency threshold between two inputs
+        UString             outputName;        //!< Output file name (empty means stderr).
+        int64_t             latencyThreshold;  //!< Latency threshold between two inputs
 
         //!
         //! Constructor.

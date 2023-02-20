@@ -28,7 +28,7 @@
 //----------------------------------------------------------------------------
 //!
 //!  @file
-//!  Implementation of the PCR comparator  (command tspcrdelta).
+//!  Implementation of the latency monitor (command tslatencymonitor).
 //!
 //----------------------------------------------------------------------------
 
@@ -42,8 +42,8 @@ namespace ts {
         class InputExecutor;
 
         //!
-        //! Implementation of the PCR comparator
-        //! This class is used by the @a tspcrdelta utility.
+        //! Implementation of the latency monitor
+        //! This class is used by the @a tslatencymonitor utility.
         //! @ingroup plugin
         //!
         class TSDUCKDLL Core {
@@ -92,7 +92,7 @@ namespace ts {
             typedef std::vector<InputData> InputDataVector;
 
             Report&                    _report;
-            LantencyMonitorArgs          _args;
+            LantencyMonitorArgs        _args;
             InputDataVector            _inputs;
             Mutex                      _mutex;            // Global mutex, protect access to all subsequent fields.
             int64_t                    _latency_threshold;// Limit for difference between two PCRs in millisecond (1 ms = 0.001s).
@@ -102,13 +102,13 @@ namespace ts {
             // Generate csv header
             void csvHeader();
 
-            // Compare the different between two PCR data list
+            // Compare the different between two timing data list
             void comparePCR(InputDataVector& inputs);
 
-            // Verify PCR data input timestamp
+            // Verify PCR input timestamp
             bool verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2);
 
-            // Reset all PCR data list
+            // Reset all time data list
             void resetPCRDataList();
         };
     }

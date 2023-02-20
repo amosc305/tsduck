@@ -27,11 +27,11 @@
 //
 //----------------------------------------------------------------------------
 //
-//  TS PCR comparator based on input plugins.
+//  TS Latency Monitor based on input plugins.
 //
 //  Implementation notes:
 //
-//  The class tsPcrComparator implements the core function of tspcrdelta. It is used
+//  The class tsLatencyMonitorCore implements the core function of tslatencymonitor. It is used
 //  by all other classes to get their instructions and report their status.
 //
 //  Each instance of the class InputExecutor implements a thread running one
@@ -58,9 +58,9 @@ namespace {
     public:
         Options(int argc, char *argv[]);
 
-        ts::DuckContext       duck;            // TSDuck context
-        ts::AsyncReportArgs   log_args;        // Asynchronous logger arguments.
-        ts::LantencyMonitorArgs comparator_args; // TS processing arguments.
+        ts::DuckContext         duck;                 // TSDuck context
+        ts::AsyncReportArgs     log_args;             // Asynchronous logger arguments.
+        ts::LantencyMonitorArgs latency_monitor_args; // TS processing arguments.
     };
 }
 
@@ -68,17 +68,17 @@ Options::Options(int argc, char *argv[]) :
     ts::ArgsWithPlugins(2, 2, 0, 0, 0, 0, u"Compare PCR between two TS input source", u"[Options]"),
     duck(this),
     log_args(),
-    comparator_args()
+    latency_monitor_args()
 {
     log_args.defineArgs(*this);
-    comparator_args.defineArgs(*this);
+    latency_monitor_args.defineArgs(*this);
 
     // Analyze the command.
     analyze(argc, argv);
 
     // Load option values.
     log_args.loadArgs(duck, *this);
-    comparator_args.loadArgs(*this);
+    latency_monitor_args.loadArgs(*this);
 
     // Final checking
     exitOnError();
@@ -98,7 +98,7 @@ int MainCode(int argc, char *argv[])
     ts::AsyncReport report(opt.maxSeverity(), opt.log_args);
 
     // The TS input processing is performed into this object.
-    ts::tslatencymonitor::Core core(opt.comparator_args, report);
+    ts::tslatencymonitor::Core core(opt.latency_monitor_args, report);
 
     return core.start() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

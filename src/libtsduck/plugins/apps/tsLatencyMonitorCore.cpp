@@ -200,7 +200,7 @@ bool tslatencymonitor::Core::verifyPCRDataInputTimestamp(int64_t timestamp1, int
 
 
 //----------------------------------------------------------------------------
-// Reset all PCR data list
+// Reset all timing data list
 //----------------------------------------------------------------------------
 void tslatencymonitor::Core::resetPCRDataList()
 {

@@ -28,7 +28,7 @@
 //----------------------------------------------------------------------------
 //!
 //!  @file
-//!  PCR comparator (tspcrdelta) input plugin executor thread.
+//!  Latency monitor (tslatencymonitor) input plugin executor thread.
 //!
 //----------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@
 namespace ts {
     namespace tslatencymonitor {
         //!
-        //! Execution context of a tspcrdelta input plugin.
+        //! Execution context of a tslatencymonitor input plugin.
         //! @ingroup plugin
         //!
         class InputExecutor : public PluginThread {
@@ -65,7 +65,7 @@ namespace ts {
             //!
             ~InputExecutor() override;
 
-            // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
+            // Implementation of TSP. We do not use "joint termination" in tslatencymonitor.
             void useJointTermination(bool) override;
             void jointTerminate() override;
             bool useJointTermination() const override;
@@ -80,7 +80,7 @@ namespace ts {
             void terminateInput();
 
         private:
-            Core&           _comparator;  // Comparator instance
+            Core&                    _monitor;     // Monitor core instance
             InputPlugin*             _input;       // Plugin API.
             const size_t             _pluginIndex; // Index of this input plugin.
             const size_t             _pluginCount; // Count of total plugin
