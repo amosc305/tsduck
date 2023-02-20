@@ -29,17 +29,17 @@
 
 #include "tstslatencymonitorInputExecutor.h"
 
-using namespace ts::tslatencymonitor;
+using namespace ts;
 
 #if defined(TS_NEED_STATIC_CONST_DEFINITIONS)
-constexpr size_t InputExecutor::BUFFERED_PACKETS;
+constexpr size_t tslatencymonitor::InputExecutor::BUFFERED_PACKETS;
 #endif
 
 //----------------------------------------------------------------------------
 // Constructor and destructor.
 //----------------------------------------------------------------------------
 
-InputExecutor::InputExecutor(const LantencyMonitorArgs& opt,
+tslatencymonitor::InputExecutor::InputExecutor(const LantencyMonitorArgs& opt,
                                     size_t index,
                                     Core& comparator,
                                     Report& log) :
@@ -57,7 +57,7 @@ InputExecutor::InputExecutor(const LantencyMonitorArgs& opt,
     setLogName(UString::Format(u"%s[%d]", {pluginName(), _pluginIndex}));
 }
 
-InputExecutor::~InputExecutor()
+tslatencymonitor::InputExecutor::~InputExecutor()
 {
     waitForTermination();
 }
@@ -67,34 +67,34 @@ InputExecutor::~InputExecutor()
 // Implementation of TSP. We do not use "joint termination" in tspcrdelta.
 //----------------------------------------------------------------------------
 
-void InputExecutor::useJointTermination(bool)
+void tslatencymonitor::InputExecutor::useJointTermination(bool)
 {
 }
 
-void InputExecutor::jointTerminate()
+void tslatencymonitor::InputExecutor::jointTerminate()
 {
 }
 
-bool InputExecutor::useJointTermination() const
-{
-    return false;
-}
-
-bool InputExecutor::thisJointTerminated() const
+bool tslatencymonitor::InputExecutor::useJointTermination() const
 {
     return false;
 }
 
-size_t InputExecutor::pluginCount() const
+bool tslatencymonitor::InputExecutor::thisJointTerminated() const
+{
+    return false;
+}
+
+size_t tslatencymonitor::InputExecutor::pluginCount() const
 {
     return _pluginCount;
 }
 
-void InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
+void tslatencymonitor::InputExecutor::signalPluginEvent(uint32_t event_code, Object* plugin_data) const
 {
 }
 
-size_t InputExecutor::pluginIndex() const
+size_t tslatencymonitor::InputExecutor::pluginIndex() const
 {
     return _pluginIndex;
 }
@@ -104,7 +104,7 @@ size_t InputExecutor::pluginIndex() const
 // Invoked in the context of the plugin thread.
 //----------------------------------------------------------------------------
 
-void InputExecutor::main()
+void tslatencymonitor::InputExecutor::main()
 {
     debug(u"input thread started");
 

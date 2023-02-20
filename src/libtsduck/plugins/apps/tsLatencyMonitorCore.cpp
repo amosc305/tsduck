@@ -30,13 +30,13 @@
 #include "tsLatencyMonitorCore.h"
 #include "tstslatencymonitorInputExecutor.h"
 
-using namespace ts::tslatencymonitor;
+using namespace ts;
 
 //----------------------------------------------------------------------------
 // Constructors and destructor.
 //----------------------------------------------------------------------------
 
-Core::Core(const LantencyMonitorArgs& args, Report& report) :
+tslatencymonitor::Core::Core(const LantencyMonitorArgs& args, Report& report) :
     _report(report),
     _args(args),
     _inputs(),
@@ -71,7 +71,7 @@ Core::Core(const LantencyMonitorArgs& args, Report& report) :
 // Start the PCR comparator session.
 //----------------------------------------------------------------------------
 
-bool Core::start()
+bool tslatencymonitor::Core::start()
 {
     // Get all input plugin options.
     for (size_t i = 0; i < _inputs.size(); ++i) {
@@ -115,7 +115,7 @@ bool Core::start()
 //----------------------------------------------------------------------------
 // Pass incoming TS packets for analyzing (called by input plugins).
 //----------------------------------------------------------------------------
-void Core::analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex)
+void tslatencymonitor::Core::analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector& metadata, size_t count, size_t pluginIndex)
 {
     InputData::TimingDataList& timingDataList = _inputs[pluginIndex].timingDataList;
     for (size_t i = 0; i < count; i++)
@@ -135,7 +135,7 @@ void Core::analyzePacket(const TSPacketVector& pkt, const TSPacketMetadataVector
 //----------------------------------------------------------------------------
 // Generate csv header
 //----------------------------------------------------------------------------
-void Core::csvHeader()
+void tslatencymonitor::Core::csvHeader()
 {
     *_output_file << "PCR1" << TS_DEFAULT_CSV_SEPARATOR
                     << "PCR2" << TS_DEFAULT_CSV_SEPARATOR
@@ -148,7 +148,7 @@ void Core::csvHeader()
 //----------------------------------------------------------------------------
 // Compare different between two PCRs
 //----------------------------------------------------------------------------
-void Core::comparePCR(InputDataVector& inputs)
+void tslatencymonitor::Core::comparePCR(InputDataVector& inputs)
 {
     if (inputs.size() == 2) {
         InputData::TimingDataList& timingDataList1 = inputs[0].timingDataList;
@@ -191,7 +191,7 @@ void Core::comparePCR(InputDataVector& inputs)
 //----------------------------------------------------------------------------
 // Compare the times of two PCR data and check that they were retrieved at the same time interval
 //----------------------------------------------------------------------------
-bool Core::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2)
+bool tslatencymonitor::Core::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2)
 {
     double timestampThreshold = 10; // Threshold of the different between two timestamp (in millisecond)
     double timestampDiffInMs = (double) abs(timestamp1-timestamp2)/(90000*300)*1000;
@@ -202,7 +202,7 @@ bool Core::verifyPCRDataInputTimestamp(int64_t timestamp1, int64_t timestamp2)
 //----------------------------------------------------------------------------
 // Reset all PCR data list
 //----------------------------------------------------------------------------
-void Core::resetPCRDataList()
+void tslatencymonitor::Core::resetPCRDataList()
 {
     for (size_t i = 0; i < _inputs.size(); i++) {
         _inputs[i].timingDataList.clear();
